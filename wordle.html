@@ -1,0 +1,220 @@
+<!-- wordle.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Word Game — Wordle-style</title>
+<style>
+  :root{
+    --bg:#f6f6f6; --tile:#ffffff; --border:#d0d0d0;
+    --absent:#d8d8d8; --present:#e6c75c; --correct:#76c893;
+    --key-bg:#f0f0f0;
+    font-family: Inter, system-ui, Arial, sans-serif;
+  }
+  body{background:var(--bg); margin:0; display:flex; min-height:100vh; align-items:center; justify-content:center;}
+  .app{width:min(520px,96vw); padding:24px;}
+  h1{margin:0 0 12px;font-size:20px;}
+  .grid{display:grid; grid-template-rows: repeat(6, 1fr); gap:8px; margin-bottom:12px;}
+  .row{display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;}
+  .tile{aspect-ratio:1/1; background:var(--tile); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:24px; text-transform:uppercase; user-select:none;}
+  .tile.revealed { color: white; border: none;}
+  .keyboard{display:flex; flex-direction:column; gap:8px;}
+  .kb-row{display:flex; gap:8px; justify-content:center;}
+  .key{padding:10px 12px; border-radius:6px; background:var(--key-bg); min-width:36px; text-align:center; cursor:pointer; user-select:none;}
+  .key.wide{min-width:64px;}
+  .key.absent{background:var(--absent);color:#333;}
+  .key.present{background:var(--present);color:#111;}
+  .key.correct{background:var(--correct);color:#fff;}
+  .hint{color:#555;margin-bottom:8px;}
+  .controls{display:flex; gap:8px; margin-top:12px; justify-content:space-between;}
+  button{padding:8px 12px; border-radius:6px; border:1px solid #ccc; background:white; cursor:pointer;}
+  .message{margin-top:12px; font-weight:600;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Word — Wordle-style (demo)</h1>
+  <div class="hint" id="hint">Hint: <span id="hintText">Try a five-letter word.</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="keyboard" id="keyboard"></div>
+  <div class="controls">
+    <button id="btnReset">Reset</button>
+    <div id="status"></div>
+  </div>
+  <div class="message" id="message"></div>
+</div>
+
+<script>
+/*
+ * PUZZLE CONFIG - change these to use your own words/hints
+ * - solution: the target word (string)
+ * - hint: shown on top
+ * - length: 5 recommended
+ * - maxGuesses: 6 recommended
+ */
+const PUZZLE = {
+  solution: "CRANE",   // <-- change to your answer (uppercase)
+  hint: "A common 5-letter starting guess; change me",
+  length: 5,
+  maxGuesses: 6
+};
+
+/* ------- Implementation (no external libs) ------- */
+const gridEl = document.getElementById('grid');
+const kbEl = document.getElementById('keyboard');
+const hintText = document.getElementById('hintText');
+const statusEl = document.getElementById('status');
+const messageEl = document.getElementById('message');
+const btnReset = document.getElementById('btnReset');
+
+hintText.textContent = PUZZLE.hint;
+
+let state = {
+  row: 0,
+  col: 0,
+  guesses: Array.from({length: PUZZLE.maxGuesses}, ()=>Array(PUZZLE.length).fill('')),
+  statuses: Array.from({length: PUZZLE.maxGuesses}, ()=>Array(PUZZLE.length).fill('')), // 'absent'/'present'/'correct'
+  keyState: {} // letter -> class
+};
+
+function createGrid(){
+  gridEl.innerHTML = '';
+  for(let r=0;r<PUZZLE.maxGuesses;r++){
+    const row = document.createElement('div'); row.className='row';
+    for(let c=0;c<PUZZLE.length;c++){
+      const t = document.createElement('div'); t.className='tile'; t.id=`tile-${r}-${c}`; row.appendChild(t);
+    }
+    gridEl.appendChild(row);
+  }
+}
+
+const KEY_ROWS = ['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
+function createKeyboard(){
+  kbEl.innerHTML='';
+  KEY_ROWS.forEach((row, idx)=>{
+    const kr = document.createElement('div'); kr.className='kb-row';
+    if(idx===2){
+      const enter = document.createElement('div'); enter.className='key wide'; enter.textContent='Enter';
+      enter.onclick = onEnter; kr.appendChild(enter);
+    }
+    for(const ch of row){
+      const k = document.createElement('div'); k.className='key'; k.textContent=ch;
+      k.onclick = ()=>onKey(ch);
+      k.id = `key-${ch}`;
+      kr.appendChild(k);
+    }
+    if(idx===2){
+      const del = document.createElement('div'); del.className='key wide'; del.textContent='Del';
+      del.onclick = onDelete; kr.appendChild(del);
+    }
+    kbEl.appendChild(kr);
+  });
+}
+
+function refreshGrid(){
+  for(let r=0;r<PUZZLE.maxGuesses;r++){
+    for(let c=0;c<PUZZLE.length;c++){
+      const tile = document.getElementById(`tile-${r}-${c}`);
+      tile.textContent = state.guesses[r][c] || '';
+      tile.className = 'tile' + (state.statuses[r][c] ? ' revealed ' + state.statuses[r][c] : '');
+    }
+  }
+  // update keys
+  for(const [k,cls] of Object.entries(state.keyState)){
+    const elem = document.getElementById(`key-${k}`);
+    if(elem){
+      elem.classList.remove('absent','present','correct');
+      if(cls) elem.classList.add(cls);
+    }
+  }
+}
+
+function onKey(letter){
+  if(state.row >= PUZZLE.maxGuesses) return;
+  if(state.col >= PUZZLE.length) return;
+  state.guesses[state.row][state.col] = letter;
+  state.col++;
+  refreshGrid();
+}
+
+function onDelete(){
+  if(state.col===0) return;
+  state.col--;
+  state.guesses[state.row][state.col] = '';
+  refreshGrid();
+}
+
+function onEnter(){
+  if(state.col !== PUZZLE.length) { messageEl.textContent = 'Not enough letters'; return; }
+  const guess = state.guesses[state.row].join('');
+  // optionally you can add a dictionary check here
+  evaluateGuess(guess);
+}
+
+function evaluateGuess(guess){
+  const sol = PUZZLE.solution.toUpperCase();
+  const guessArr = guess.split('');
+  const solArr = sol.split('');
+  const status = Array(PUZZLE.length).fill('absent');
+  // first pass: correct
+  const used = Array(PUZZLE.length).fill(false);
+  for(let i=0;i<PUZZLE.length;i++){
+    if(guessArr[i] === solArr[i]){ status[i] = 'correct'; used[i]=true; }
+  }
+  // second pass: present
+  for(let i=0;i<PUZZLE.length;i++){
+    if(status[i] === 'correct') continue;
+    const idx = solArr.findIndex((ch,j)=>ch===guessArr[i] && !used[j]);
+    if(idx !== -1){ status[i] = 'present'; used[idx]=true; }
+  }
+  state.statuses[state.row] = status;
+  // update keyState with priority: correct > present > absent
+  for(let i=0;i<PUZZLE.length;i++){
+    const ch = guessArr[i];
+    const prev = state.keyState[ch];
+    const now = status[i];
+    if(prev === 'correct') continue;
+    if(prev === 'present' && now === 'absent') continue;
+    state.keyState[ch] = now;
+  }
+  refreshGrid();
+  // check win/lose
+  if(status.every(s=>s==='correct')){
+    messageEl.textContent = `Nice — solved in ${state.row+1} guess${state.row+1>1?'es':''}!`;
+    state.row = PUZZLE.maxGuesses; // lock
+    return;
+  }
+  state.row++;
+  state.col=0;
+  if(state.row >= PUZZLE.maxGuesses){
+    messageEl.textContent = `Out of guesses — answer was ${PUZZLE.solution.toUpperCase()}`;
+  } else {
+    messageEl.textContent = '';
+  }
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') onEnter();
+  else if(e.key === 'Backspace') onDelete();
+  else if(e.key.length === 1 && /[a-zA-Z]/.test(e.key)){
+    onKey(e.key.toUpperCase());
+  }
+});
+
+btnReset.onclick = ()=>init();
+
+function init(){
+  // normalize solution length
+  PUZZLE.solution = String(PUZZLE.solution || '').toUpperCase().slice(0, PUZZLE.length).padEnd(PUZZLE.length,'A');
+  state.row = 0; state.col = 0;
+  state.guesses = Array.from({length: PUZZLE.maxGuesses}, ()=>Array(PUZZLE.length).fill(''));
+  state.statuses = Array.from({length: PUZZLE.maxGuesses}, ()=>Array(PUZZLE.length).fill(''));
+  state.keyState = {};
+  createGrid();
+  createKeyboard();
+  refreshGrid();
+  messageEl.textContent = '';
+}
+init();
+</script>

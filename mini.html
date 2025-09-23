@@ -1,0 +1,179 @@
+<!-- mini.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mini Crossword (5x5)</title>
+<style>
+  :root{--bg:#fff; --sq:#fff; --border:#222; --active:#dbe9ff;}
+  body{font-family:Inter,Arial,sans-serif; margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#fbfbfd;}
+  .app{width:640px; padding:20px;}
+  h1{margin:0 0 10px;}
+  .wrap{display:flex; gap:18px; align-items:flex-start;}
+  .board{display:grid; grid-template-columns:repeat(5,46px); gap:2px; background:#ddd; padding:6px; border-radius:8px;}
+  .cell{width:46px;height:46px; background:var(--sq); display:flex; align-items:center; justify-content:center; position:relative; font-weight:700; text-transform:uppercase; cursor:text;}
+  .cell.black{background:#111;}
+  .cell input{border:0; outline:none; width:100%; height:100%; text-align:center; font-size:20px; background:transparent;}
+  .num{position:absolute; left:2px; top:2px; font-size:10px;}
+  .clues{max-width:320px;}
+  .clueTitle{font-weight:800; margin-top:6px;}
+  .clue{margin:4px 0; font-size:14px;}
+  .controls{margin-top:12px;}
+  button{padding:8px 10px; border-radius:6px; border:1px solid #ccc; background:white; cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Mini Crossword (5x5)</h1>
+  <div class="wrap">
+    <div id="board" class="board"></div>
+    <div class="clues" id="clues">
+      <div class="clueTitle">Across</div><div id="across"></div>
+      <div class="clueTitle">Down</div><div id="down"></div>
+      <div class="controls"><button id="btnCheck">Check</button> <button id="btnReveal">Reveal</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+PUZZLE CONFIG
+- grid: array of 5 strings (5 columns). Use '#' for black square, '.' or '_' for empty, or letters for prefilled.
+- clues: object {across: [{num, r, c, len, clue, answer}], down: [...]}
+Positions use 0-indexed r,c.
+*/
+const PUZZLE = {
+  grid: [
+    ".....",
+    ".###.",
+    ".....",
+    ".#.#.",
+    "....."
+  ],
+  clues: {
+    across: [
+      {num:1, r:0, c:0, len:5, clue:"Bird with long neck", answer:"SWAN"},
+      {num:5, r:2, c:0, len:5, clue:"Opposite of near", answer:"FARAW"},
+      {num:6, r:4, c:0, len:5, clue:"A sweet fruit", answer:"MANGO"}
+    ],
+    down: [
+      {num:1, r:0, c:0, len:3, clue:"Consume", answer:"EAT"},
+      {num:2, r:0, c:2, len:5, clue:"A planet", answer:"EARTH"}
+    ]
+  }
+};
+
+// For simplicity this mini implementation assumes 5x5; tweak sizes if you need larger.
+const SIZE = 5;
+const boardEl = document.getElementById('board');
+const acrossEl = document.getElementById('across');
+const downEl = document.getElementById('down');
+
+function buildBoard(){
+  boardEl.innerHTML='';
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const ch = (PUZZLE.grid[r]||'')[c] || '.';
+      const cell = document.createElement('div'); cell.className='cell';
+      if(ch === '#'){ cell.classList.add('black'); boardEl.appendChild(cell); continue; }
+      const input = document.createElement('input'); input.maxLength=1; input.dataset.r=r; input.dataset.c=c;
+      input.oninput = ()=> input.value = input.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,1);
+      cell.appendChild(input);
+      // numbering logic: show number if cell starts an across or down
+      const starts = startsNumber(r,c);
+      if(starts) {
+        const num = document.createElement('div'); num.className='num'; num.textContent = starts; cell.appendChild(num);
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+  renderClues();
+}
+
+function startsNumber(r,c){
+  // check if cell is not black and either at left/top or neighbor is black
+  if((PUZZLE.grid[r]||'')[c]==='#') return null;
+  const left = c === 0 || (PUZZLE.grid[r]||'')[c-1] === '#';
+  const up = r === 0 || (PUZZLE.grid[r-1]||'')[c] === '#';
+  if(left || up){
+    // find clue number from across or down arrays (naive)
+    const all = [...(PUZZLE.clues.across||[]), ...(PUZZLE.clues.down||[])];
+    const found = all.find(cl => cl.r===r && cl.c===c);
+    return found ? found.num : '';
+  }
+  return null;
+}
+
+function renderClues(){
+  acrossEl.innerHTML=''; downEl.innerHTML='';
+  (PUZZLE.clues.across||[]).forEach(cl=>{
+    const el = document.createElement('div'); el.className='clue';
+    el.textContent = `${cl.num}. ${cl.clue} (${cl.len})`;
+    acrossEl.appendChild(el);
+  });
+  (PUZZLE.clues.down||[]).forEach(cl=>{
+    const el = document.createElement('div'); el.className='clue';
+    el.textContent = `${cl.num}. ${cl.clue} (${cl.len})`;
+    downEl.appendChild(el);
+  });
+}
+
+function checkAnswers(reveal=false){
+  // simple check by mapping answers to positions; answers in puzzle are expected uppercase and may be exact length
+  const cells = Array.from(document.querySelectorAll('.cell input'));
+  const gridVals = Array.from({length:SIZE}, ()=>Array(SIZE).fill(''));
+  cells.forEach(inp=> gridVals[parseInt(inp.dataset.r)][parseInt(inp.dataset.c)] = (inp.value||'').toUpperCase());
+  let allCorrect = true;
+  // check across
+  (PUZZLE.clues.across||[]).forEach(cl=>{
+    let letters = '';
+    for(let i=0;i<cl.len;i++){
+      const r=cl.r,c=cl.c+i;
+      letters += gridVals[r][c] || '';
+    }
+    if(letters === cl.answer.toUpperCase()) {
+      // ok
+    } else {
+      allCorrect=false;
+      if(reveal){
+        // fill in letters
+        for(let i=0;i<cl.len;i++){
+          const r=cl.r,c=cl.c+i;
+          const inp = document.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+          if(inp) inp.value = cl.answer[i] || '';
+        }
+      }
+    }
+  });
+  // naive down check similar
+  (PUZZLE.clues.down||[]).forEach(cl=>{
+    let letters = '';
+    for(let i=0;i<cl.len;i++){
+      const r=cl.r+i,c=cl.c;
+      letters += gridVals[r][c] || '';
+    }
+    if(letters === cl.answer.toUpperCase()) {
+    } else { allCorrect=false;
+      if(reveal){
+        for(let i=0;i<cl.len;i++){
+          const r=cl.r+i,c=cl.c;
+          const inp = document.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+          if(inp) inp.value = cl.answer[i] || '';
+        }
+      }
+    }
+  });
+  return allCorrect;
+}
+
+document.getElementById('btnCheck').onclick = ()=>{
+  const ok = checkAnswers(false);
+  alert(ok? 'All correct! Nice.' : 'Some answers are incorrect or missing.');
+};
+document.getElementById('btnReveal').onclick = ()=> {
+  if(confirm('Reveal all answers?')) { checkAnswers(true); }
+};
+
+buildBoard();
+</script>

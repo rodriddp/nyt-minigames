@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NYT Mini Games — Sunday, 9th of November</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'DM Serif Text', Georgia, 'Times New Roman', serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      margin-top: 40px;
+      text-align: center;
+    }
+    header img.nyt-logo {
+      width: 80px; /* adjust size as needed */
+    }
+    header .date {
+      margin-top: 10px;
+      font-size: 1.5rem;
+      color: #333;
+      font-weight: normal;
+    }
+    .games-list {
+      margin-top: 50px;
+      width: 320px; /* or your desired width */
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .game-tile {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 2px solid #333;
+      border-radius: 12px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+      padding: 10px 20px;
+      text-decoration: none;
+      color: #333;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .game-tile:hover {
+      background: #e9ecef;
+      transform: scale(1.03);
+    }
+    .game-logo {
+      width: 50px; /* adjust */
+      height: auto;
+      margin-right: 15px;
+    }
+    .game-name {
+      font-size: 1.3rem;
+      font-family: 'DM Serif Text', Georgia, 'Times New Roman', serif;
+      font-stretch: condensed;
+      font-weight: bold;
+    }
+    /* Specific game colors (approximate / placeholders) */
+    /* Wordle green/yellow/gray style border or background accents */
+    .wordle {
+      border-color: #D3D6D9; /* Wordle green */
+      background:#D3D6D9;
+    }
+    .connections {
+      border-color: #AEA7F3; /* example color */
+      background: #AEA7F3
+    }
+    .strands {
+      border-color: #BBDCD7;
+      background: #BBDCD7; /* example color */
+    }
+    .the-mini {
+      border-color: #9DBCf5;
+      background: #9DBCf5; /* example color */
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- NYT Logo: Insert your NYT logo image here -->
+    <img src="icons/nyt_games.png" alt="The New York Times Logo" class="nyt-logo">
+    <div class="date">Sunday, 9th of November</div>
+  </header>
+
+  <div class="games-list">
+    <a href="wordle.html" class="game-tile wordle">
+      <img src="icons/wordle.png" alt="Wordle Logo" class="game-logo">
+      <span class="game-name">Wordle</span>
+    </a>
+    <a href="connections.html" class="game-tile connections">
+      <img src="icons/connections.png" alt="Connections Logo" class="game-logo">
+      <span class="game-name">Connections</span>
+    </a>
+    <a href="strands.html" class="game-tile strands">
+      <img src="icons/strands.png" alt="Strands Logo" class="game-logo">
+      <span class="game-name">Strands</span>
+    </a>
+    <a href="mini.html" class="game-tile the-mini">
+      <img src="mini_logo.png" alt="The Mini Logo" class="game-logo">
+      <span class="game-name">The Mini</span>
+    </a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!-- strands.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Strands-style</title>
+<style>
+  :root{--bg:#fff; --tile:#f8fbff; --accent:#2b7be4; --found:#76c893;}
+  body{font-family:Inter,Arial,sans-serif; margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f6fb;}
+  .app{width:min(720px,96vw); padding:20px;}
+  h1{margin:0 0 10px;}
+  .grid{display:grid; gap:8px; margin-bottom:12px; user-select:none;}
+  .cell{width:64px; height:64px; display:flex; align-items:center; justify-content:center; background:var(--tile); border-radius:10px; font-weight:800; font-size:22px; cursor:pointer;}
+  .cell.active{background:var(--accent); color:#fff; transform:scale(1.05);}
+  .cell.found{background:var(--found); color:#fff;}
+  .rowLabel{font-size:13px;color:#444;margin-bottom:6px;}
+  .controls{display:flex; gap:8px;}
+  button{padding:8px 12px; border-radius:8px; border:1px solid #ddd; background:white; cursor:pointer;}
+  .foundList{margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Strands-style (trace words)</h1>
+  <div id="gridWrap"></div>
+  <div class="controls"><button id="btnReset">Reset</button><button id="btnShow">Show Answers</button></div>
+  <div class="foundList" id="foundList"></div>
+</div>
+
+<script>
+/*
+ * PUZZLE CONFIG
+ * grid: 2D array of letters (strings)
+ * answers: array of words that are valid (uppercase)
+ * You may want to ensure answers are traceable by adjacent moves (8-neighborhood)
+ */
+const PUZZLE = {
+  grid: [
+    ['C','R','A','N','E'],
+    ['L','I','M','O','N'],
+    ['S','T','A','R','T'],
+    ['P','E','A','R','S'],
+    ['G','O','L','D','S']
+  ],
+  answers: ["CRANE","START","PEARS","GOLDS","LIMON"] // put uppercase words
+};
+
+let state = {activePath:[], found: new Set()};
+const gridWrap = document.getElementById('gridWrap');
+const foundList = document.getElementById('foundList');
+
+function createGrid(){
+  gridWrap.innerHTML = '';
+  const rows = PUZZLE.grid.length, cols = PUZZLE.grid[0].length;
+  const gridEl = document.createElement('div');
+  gridEl.className='grid';
+  gridEl.style.gridTemplateColumns = `repeat(${cols}, 64px)`;
+  gridWrap.appendChild(gridEl);
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const idx = r*cols+c;
+      const cell = document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r; cell.dataset.c=c; cell.dataset.idx=idx;
+      cell.textContent = PUZZLE.grid[r][c];
+      cell.onpointerdown = (e)=>startPath(e, r, c);
+      cell.onpointerenter = (e)=> extendPath(e, r, c);
+      cell.onpointerup = ()=> endPath();
+      gridEl.appendChild(cell);
+    }
+  }
+  updateFoundList();
+}
+
+function getCellEl(r,c){ return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`); }
+
+function startPath(e,r,c){
+  state.activePath = [{r,c}];
+  updateActive();
+  e.preventDefault();
+}
+function extendPath(e,r,c){
+  if(!state.activePath.length) return;
+  const last = state.activePath[state.activePath.length-1];
+  // allow revisit only if not already in path
+  if(state.activePath.some(p=>p.r===r && p.c===c)) return;
+  // require adjacency (8-neighbor)
+  if(Math.max(Math.abs(last.r - r), Math.abs(last.c - c)) <= 1){
+    state.activePath.push({r,c});
+    updateActive();
+  }
+}
+function endPath(){
+  if(!state.activePath.length) return;
+  const word = state.activePath.map(p=>PUZZLE.grid[p.r][p.c]).join('');
+  if(PUZZLE.answers.includes(word) && !state.found.has(word)){
+    state.found.add(word);
+    // mark cells found
+    state.activePath.forEach(p=>{
+      const el = getCellEl(p.r,p.c); if(el) el.classList.add('found');
+    });
+    updateFoundList();
+  }
+  // clear active visualization
+  state.activePath = [];
+  updateActive();
+}
+
+function updateActive(){
+  document.querySelectorAll('.cell').forEach(el=>el.classList.remove('active'));
+  state.activePath.forEach(p=>{
+    const el = getCellEl(p.r,p.c); if(el) el.classList.add('active');
+  });
+}
+
+function updateFoundList(){
+  foundList.innerHTML = `<strong>Found (${state.found.size}/${PUZZLE.answers.length}):</strong> ${[...state.found].join(', ')}`;
+  if(state.found.size === PUZZLE.answers.length){
+    foundList.innerHTML += ' — All found! Nice.';
+  }
+}
+
+document.getElementById('btnReset').onclick = ()=> {
+  state={activePath:[], found:new Set()};
+  document.querySelectorAll('.cell').forEach(el=>el.classList.remove('active','found'));
+  updateFoundList();
+};
+document.getElementById('btnShow').onclick = ()=> {
+  alert('Answers:\n' + PUZZLE.answers.join('\n'));
+};
+
+createGrid();
+</script>
