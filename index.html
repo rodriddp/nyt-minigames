@@ -20,7 +20,7 @@
       text-align: center;
     }
     header img.nyt-logo {
-      width: 80px; /* adjust size as needed */
+      width: 80px;
     }
     header .date {
       margin-top: 10px;
@@ -29,83 +29,124 @@
       font-weight: normal;
     }
     .games-list {
-      margin-top: 50px;
-      width: 320px; /* or your desired width */
+      margin-top: 30px;
+      width: 360px;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
     .game-tile {
       display: flex;
+      justify-content: space-between;
       align-items: center;
       background: white;
       border: 2px solid #333;
       border-radius: 12px;
       box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-      padding: 10px 20px;
+      padding: 15px 20px;
       text-decoration: none;
       color: #333;
       transition: transform 0.2s, background 0.2s;
+      min-height: 70px;
     }
     .game-tile:hover {
       background: #e9ecef;
       transform: scale(1.03);
     }
-    .game-logo {
-      width: 50px; /* adjust */
-      height: auto;
-      margin-right: 15px;
+    .game-info {
+      display: flex;
+      flex-direction: column;
     }
     .game-name {
       font-size: 1.3rem;
-      font-family: 'DM Serif Text', Georgia, 'Times New Roman', serif;
-      font-stretch: condensed;
       font-weight: bold;
     }
-    /* Specific game colors (approximate / placeholders) */
-    /* Wordle green/yellow/gray style border or background accents */
+    .game-subtitle {
+      font-size: 0.8rem;
+      color: #4D4D4E; /* subtitle gray from screenshot */
+      font-weight: normal;
+      margin-top: 3px;
+    }
+    .game-logo {
+      width: 55px;
+      height: auto;
+      margin-left: 15px;
+    }
+    /* Specific game colors */
     .wordle {
-      border-color: #D3D6D9; /* Wordle green */
-      background:#D3D6D9;
+      border-color: #D3D6D9;
+      background: #D3D6D9;
     }
     .connections {
-      border-color: #AEA7F3; /* example color */
-      background: #AEA7F3
+      border-color: #AEA7F3;
+      background: #AEA7F3;
     }
     .strands {
       border-color: #BBDCD7;
-      background: #BBDCD7; /* example color */
+      background: #BBDCD7;
     }
     .the-mini {
       border-color: #9DBCf5;
-      background: #9DBCf5; /* example color */
+      background: #9DBCf5;
+    }
+    /* Date under page title */
+    .games-date {
+      font-size: 0.9rem;
+      color: #000;
+      font-weight: 500;
+      margin-top: 12px;
     }
   </style>
 </head>
 <body>
   <header>
-    <!-- NYT Logo: Insert your NYT logo image here -->
     <img src="icons/nyt_games.png" alt="The New York Times Logo" class="nyt-logo">
     <div class="date">Sunday, 9th of November</div>
   </header>
 
   <div class="games-list">
+    <!-- Wordle -->
     <a href="wordle.html" class="game-tile wordle">
+      <div class="game-info">
+        <span class="game-name">Wordle</span>
+        <span class="game-subtitle">Guess your way to the correct word.</span>
+        <span class="games-date">Sunday, 9 Nov</span>
+      </div>
       <img src="icons/wordle.png" alt="Wordle Logo" class="game-logo">
-      <span class="game-name">Wordle</span>
     </a>
+
+    <!-- Connections -->
     <a href="connections.html" class="game-tile connections">
+      <div class="game-info">
+        <span class="game-name">Connections</span>
+        <span class="game-subtitle">Group words from our adventures together.</span>
+        <span class="games-date">Sunday, 9 Nov</span>
+      </div>
       <img src="icons/connections.png" alt="Connections Logo" class="game-logo">
-      <span class="game-name">Connections</span>
     </a>
+
+    <!-- Strands -->
     <a href="strands.html" class="game-tile strands">
+      <div class="game-info">
+        <span class="game-name">Strands</span>
+        <span class="game-subtitle">Unravel the hidden theme by connecting letters.</span>
+        <span class="games-date">Sunday, 9 Nov</span>
+      </div>
       <img src="icons/strands.png" alt="Strands Logo" class="game-logo">
-      <span class="game-name">Strands</span>
     </a>
+
+    <!-- The Mini -->
     <a href="mini.html" class="game-tile the-mini">
-      <img src="mini_logo.png" alt="The Mini Logo" class="game-logo">
-      <span class="game-name">The Mini</span>
+      <div class="game-info">
+        <span class="game-name">The Mini</span>
+        <span class="game-subtitle">A quick crossword for when you’re short on time.</span>
+        <span class="games-date">Sunday, 9 Nov</span>
+      </div>
+      <img src="icons/mini.png" alt="The Mini Logo" class="game-logo">
     </a>
   </div>
 </body>
 </html>
+
+<!-- subtitle letters thinner, other font maybe --> 
+<!-- personalize subtitles in wordle,mini and (strands) --> 
