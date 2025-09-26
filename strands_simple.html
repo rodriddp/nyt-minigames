@@ -21,39 +21,9 @@
     gap: 12px;
   }
 
-  .theme {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    border-radius: 10px;
-  }
-  
-  .theme-top {
-    background: lightblue;
-    height: 25%; /* 1/4 of the parent height */
-    padding: 10px;
-    font-size: 14px;
-    font-weight: 400; /* Thin text */
-    text-align: center;
-    color: black;
-    border-radius: 10px 10px 0 0;
-  }
-  
-  .theme-bottom {
-    background: white;
-    height: 75%; /* 3/4 of the parent height */
-    padding: 10px;
-    font-size: 20px;
-    font-weight: bold; /* Bold text */
-    text-align: center;
-    color: black;
-    border: 1px solid #d3d3d3; /* 1px light grey border */
-    border-top: none; /* Avoid double border with top */
-    border-radius: 0 0 10px 10px; /* Rounded bottom edges */
-  }
+  .theme { background: lightblue; padding: 8px 12px; border-radius:6px; }
   .found-count { margin: 4px 0; }
   .current-word { font-size: 24px; text-align: center; min-height:28px; }
-  .current-word.error { color: red; } /* Visual cue for error messages */
 
   .grid {
     position: relative;
@@ -87,33 +57,13 @@
   .letter.found-blue::after { background: #B8DEEC; }
   .letter.found-yellow::after { background: #F1D046; }
 
-  .letter.hint-highlight::after {
-    content: "";
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -1;
-    border: 2px dashed lightblue;
-    background: transparent;
-  }
+  .hint-highlight { border: 2px dashed lightblue; box-sizing: border-box; }
 
   .hint-button {
     background: white; color: black; border: 1px solid #333;
     border-radius: 20px; padding: 10px 20px; cursor: pointer; font-size: 16px;
   }
   .inverted { background: black; color: white; }
-
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-    justify-content: center;
-    margin-top: 25px;
-  }
 
   svg.edges {
     position: absolute;
@@ -126,18 +76,15 @@
 </head>
 <body>
 <div class="game">
-    <div class="theme">
-        <div class="theme-top">TODAY'S THEME</div>
-        <div class="theme-bottom">Simply divine</div>
-    </div>
-    <div class="current-word"></div>
-    <div class="grid">
-        <svg class="edges"></svg>
-    </div>
-    <div class="controls">
-      <button class="hint-button">Hint</button>
-      <div class="found-count">0 of 6 theme words found.</div>
-    </div>
+  <div class="theme">TODAY'S THEME <br> Simply divine</div>
+  <div class="found-count">0 of 6 theme words found.</div>
+  <div class="current-word"></div>
+
+  <div class="grid">
+    <svg class="edges"></svg>
+  </div>
+
+  <button class="hint-button">Hint</button>
 </div>
 
 <script>
@@ -169,11 +116,7 @@ let permanentEdges = [];
 let mistakeCount = 0;
 let spentHints = 0;
 let words = new Set();
-let mouseDown = false;
-let hasMoved = false;
-let startR, startC;
-let currentHintWord = null;
-let usedWords = new Set();
+let submittedNonSolutions = new Set();
 
 async function loadDictionary() {
   try {
@@ -218,14 +161,11 @@ function handleHint() {
   if (hintsAvailable <= 0) return;
   spentHints += 1;
   updateHintButton();
-  
-  if (currentHintWord) return;
-
-  const unsolved = themeWords.filter(w => !found.has(w));
+  clearHints();
+  const unsolved = allSolutions.filter(w => !found.has(w));
   if (unsolved.length === 0) return;
-  
-  currentHintWord = unsolved[Math.floor(Math.random() * unsolved.length)];
-  const path = wordToPath[currentHintWord];
+  const randWord = unsolved[Math.floor(Math.random() * unsolved.length)];
+  const path = wordToPath[randWord];
   path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
 }
 
@@ -233,20 +173,6 @@ function isAdjacent(p1, p2) {
   const dr = Math.abs(p1[0] - p2[0]);
   const dc = Math.abs(p1[1] - p2[1]);
   return dr <= 1 && dc <= 1 && !(dr === 0 && dc === 0);
-}
-
-function showMessage(message, duration = 3000) {
-  currentWordDiv.classList.add('error');
-  currentWordDiv.textContent = message;
-  setTimeout(() => {
-    currentWordDiv.classList.remove('error');
-    if (currentPath.length > 0) {
-      currentWordDiv.textContent = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-    } else {
-      currentWordDiv.textContent = '';
-      clearPath();
-    }
-  }, duration);
 }
 
 function clearPath() {
@@ -263,123 +189,68 @@ function submit() {
   }
   const word = currentPath.map(([r, c]) => gridLetters[r][c]).join('').toUpperCase();
   const lower = word.toLowerCase();
-  console.log(`Submitting word: ${word}, lowercase: ${lower}, usedWords:`, Array.from(usedWords));
-  if (usedWords.has(lower)) {
-    console.log(`Word ${lower} already in usedWords, showing message`);
-    showMessage("Word already found...");
-    return;
-  }
   if (!words.has(lower)) {
-    console.log(`Invalid word: ${lower}, not adding to usedWords`);
-    showMessage("Not a word...");
     clearPath();
     return;
   }
-  usedWords.add(lower); // Add valid word to usedWords
   if (allSolutions.includes(word)) {
-    console.log(`Found solution word: ${word}`);
     const isSpangram = word === spangram;
     const className = isSpangram ? 'found-yellow' : 'found-blue';
-    currentPath.forEach(([r, c]) => getCell(r, c).classList.add(className));
+    const edgeColor = isSpangram ? '#F1D046' : '#B8DEEC';
+    currentPath.forEach(([r, c]) => {
+      const cell = getCell(r, c);
+      cell.classList.remove('found-blue', 'found-yellow', 'selected');
+      cell.classList.add(className);
+    });
     found.add(word);
     foundCountDiv.textContent = `${found.size} of 6 theme words found.`;
 
-    if (word === currentHintWord) {
-      clearHints();
-      currentHintWord = null;
-    }
-
+    // Store edges permanently
     for (let i = 1; i < currentPath.length; i++) {
       const [r1, c1] = currentPath[i - 1];
       const [r2, c2] = currentPath[i];
-      let color = className === 'found-blue' ? "#B8DEEC" : (className === 'found-yellow' ? "#F1D046" : "#DBD8C7");
-      permanentEdges.push([r1, c1, r2, c2, color]);
+      permanentEdges.push([r1, c1, r2, c2, edgeColor]);
     }
-  } else {
-    console.log(`Valid but non-solution word: ${lower}, mistakeCount: ${mistakeCount + 1}`);
-    mistakeCount += 1;
-    updateHintButton();
-    showMessage("Not a theme word...");
-  }
-  clearPath();
-}
-
-function handleMouseDown(r, c) {
-  mouseDown = true;
-  hasMoved = false;
-  startR = r;
-  startC = c;
-  if (currentHintWord && !found.has(currentHintWord)) {
-    return;
-  }
-  clearHints();
-  currentHintWord = null;
-}
-
-function handleMouseMove(r, c, event) {
-  if (!mouseDown || event.buttons !== 1) return;
-  if (!hasMoved) {
-    hasMoved = true;
-    currentPath = [[startR, startC]];
-    getCell(startR, startC).classList.add('selected');
-    const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-    currentWordDiv.textContent = word;
     drawEdges();
+  } else {
+    if (submittedNonSolutions.has(lower)) {
+      currentWordDiv.textContent = 'Word already found...';
+      setTimeout(() => {
+        clearPath();
+      }, 2000);
+    } else {
+      submittedNonSolutions.add(lower);
+      mistakeCount += 1;
+      updateHintButton();
+      clearPath();
+    }
   }
+}
 
+function handleClick(r, c) {
+  clearHints();
   const pos = [r, c];
-  const last = currentPath[currentPath.length - 1];
-
-  if (isAdjacent(last, pos)) {
-    const indexInPath = currentPath.findIndex(p => p[0] === r && p[1] === c);
-
-    if (indexInPath === -1) {
+  if (currentPath.length === 0) {
+    currentPath = [pos];
+    getCell(r, c).classList.add('selected');
+  } else {
+    const last = currentPath[currentPath.length - 1];
+    if (last[0] === r && last[1] === c) {
+      submit();
+      return;
+    }
+    if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
       currentPath.push(pos);
       getCell(r, c).classList.add('selected');
-    } else if (indexInPath < currentPath.length - 1) {
-      for (let i = currentPath.length - 1; i > indexInPath; i--) {
-        const [rr, cc] = currentPath[i];
-        getCell(rr, cc).classList.remove('selected');
-      }
-      currentPath = currentPath.slice(0, indexInPath + 1);
-    }
-
-    const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-    currentWordDiv.textContent = word;
-    drawEdges();
-  }
-}
-
-function handleMouseUp(r, c) {
-  if (mouseDown) {
-    mouseDown = false;
-    if (hasMoved) {
-      submit();
     } else {
-      const pos = [r, c];
-      if (currentPath.length === 0) {
-        currentPath = [pos];
-        getCell(r, c).classList.add('selected');
-      } else {
-        const last = currentPath[currentPath.length - 1];
-        if (last[0] === r && last[1] === c) {
-          submit();
-          return;
-        }
-        if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
-          currentPath.push(pos);
-          getCell(r, c).classList.add('selected');
-        } else {
-          clearPath();
-          currentPath = [pos];
-          getCell(r, c).classList.add('selected');
-        }
-      }
-      drawEdges();
-      const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-      currentWordDiv.textContent = word;
+      clearPath();
+      currentPath = [pos];
+      getCell(r, c).classList.add('selected');
     }
   }
+  drawEdges();
+  const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
+  currentWordDiv.textContent = word;
 }
 
 function getCell(r, c) {
@@ -389,10 +260,12 @@ function getCell(r, c) {
 function drawEdges() {
   edgesSvg.innerHTML = "";
 
+  // Draw permanent edges
   for (const [r1, c1, r2, c2, color] of permanentEdges) {
     drawLine(r1, c1, r2, c2, color);
   }
 
+  // Draw current selection edges
   for (let i = 1; i < currentPath.length; i++) {
     const [r1, c1] = currentPath[i - 1];
     const [r2, c2] = currentPath[i];
@@ -434,9 +307,7 @@ gridLetters.forEach((rowLetters, r) => {
     const letDiv = document.createElement('div');
     letDiv.classList.add('letter');
     letDiv.textContent = letter;
-    letDiv.addEventListener('mousedown', () => handleMouseDown(r, c));
-    letDiv.addEventListener('mousemove', (event) => handleMouseMove(r, c, event));
-    letDiv.addEventListener('mouseup', () => handleMouseUp(r, c));
+    letDiv.addEventListener('click', () => handleClick(r, c));
     row.appendChild(letDiv);
   });
   grid.appendChild(row);
@@ -448,19 +319,8 @@ window.addEventListener('resize', () => {
   if (currentPath.length > 1 || permanentEdges.length > 0) drawEdges();
 });
 
-window.addEventListener('mouseup', () => {
-  if (mouseDown && hasMoved) {
-    mouseDown = false;
-    hasMoved = false;
-    submit();
-  } else if (mouseDown) {
-    mouseDown = false;
-    hasMoved = false;
-  }
-});
-
 updateHintButton();
 </script>
 </body>
 </html>
-<!-- Mostrar SPANGRAM and WORDS when found --> 
+<!-- version simple --> 
