@@ -128,7 +128,7 @@
 <div class="game">
     <div class="theme">
         <div class="theme-top">TODAY'S THEME</div>
-        <div class="theme-bottom">Simply divine</div>
+        <div class="theme-bottom">Planning ahead</div>
     </div>
     <div class="current-word"></div>
     <div class="grid">
@@ -142,25 +142,26 @@
 
 <script>
 const gridLetters = [
-  "AVENSE".split(''),
-  "EDLARN".split(''),
-  "HAMEHT".split(''),
-  "HREENR".split(''),
-  "ACSSGE".split(''),
-  "NGDAGH".split(''),
-  "ENIRUP".split(''),
-  "LASERA".split('')
+  "ITARSA".split(''),
+  "URIEMR".split(''),
+  "GIDOHA".split(''),
+  "SRIYPS".split(''),
+  "BIRTAW".split(''),
+  "IPSRWA".split(''),
+  "DTOKOL".split(''),
+  "ENANGE".split('')
 ];
-const themeWords = ['ARCHANGEL', 'HERALD', 'MESSENGER', 'GUARDIAN', 'SERAPH'];
-const spangram = 'HEAVENSENT';
+const themeWords = ['IRIS','RIPTIDE', 'HOME', 'DIRTYPAWS', 'WORKSONG', 'ANGELA'];
+const spangram = 'GUITARSARA';
 const allSolutions = [...themeWords, spangram];
 const wordToPath = {
-  'ARCHANGEL': [[2,1],[3,1],[4,1],[3,0],[4,0],[5,0],[5,1],[6,0],[7,0]],
-  'HERALD': [[2,4],[2,3],[1,4],[1,3],[1,2],[1,1]],
-  'MESSENGER': [[2,2],[3,2],[4,2],[4,3],[3,3],[3,4],[4,4],[4,5],[3,5]],
-  'GUARDIAN': [[5,4],[6,4],[5,3],[6,3],[5,2],[6,2],[7,1],[6,1]],
-  'SERAPH': [[7,2],[7,3],[7,4],[7,5],[6,5],[5,5]],
-  'HEAVENSENT': [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5]]
+  'IRIS':[[1,2],[1,1],[2,1],[3,0]],
+  'RIPTIDE': [[3,1],[4,1],[4,0],[5,0],[5,1],[6,0],[7,0]],
+  'HOME': [[2,4],[2,3],[1,4],[1,3]],
+  'DIRTYPAWS': [[2,2],[3,2],[4,2],[4,3],[3,3],[3,4],[4,4],[4,5],[3,5]],
+  'WORKSONG': [[5,4],[6,4],[5,3],[6,3],[5,2],[6,2],[7,1],[6,1]],
+  'ANGELA': [[7,2],[7,3],[7,4],[7,5],[6,5],[5,5]],
+  'GUITARSARA': [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5]]
 };
 
 let found = new Set();
@@ -465,3 +466,7 @@ updateHintButton();
 </html>
 <!-- Mostrar SPANGRAM and WORDS when found --> 
 <!-- Clear path when word already found-->
+<!-- path on top of hint-->
+<!-- finish game -->
+<!-- back to minigames button -->
+<!-- hints black when totally filled -->
