@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Connections</title>
-  <style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Connections - HTML/JS</title>
+<style>
+
     body {
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       background: #f8f9fa;
@@ -31,10 +33,11 @@
       width: 145px;
       cursor: pointer;
     }
+
     .page-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      transform: scale(0.7); /* scale the rest of the page */
+      transform-origin: top center;
+      text-align: center;
     }
     h1 {
       font-weight: 400;
@@ -95,7 +98,7 @@
     .tile.shake {
       animation: shake 1s;
     }
-
+    
     /* Lives */
     .lives-container {
       display: flex;
@@ -132,6 +135,12 @@
       display: flex;
       gap: 15px;
       margin-top: 10px;
+    }
+    .actions, .lives-container {
+      display: flex;
+      justify-content: center;  /* center children horizontally */
+      gap: 15px;
+      width: 100%;
     }
     .btn {
       padding: 10px 20px;
@@ -187,7 +196,6 @@
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
   </div>
-
   <div class="page-wrapper">
     <h1>Create four groups of four!</h1>
     <div class="grid" id="grid"></div>
@@ -208,7 +216,7 @@
 
   <script>
     const categories = [
-      { name: "COMBINED WITH SARA, THEY MAKE A NICKNAME", color: "group-yellow", words: ["BACÍN", "HEVO", "WARMA", "VILLOSO"] },
+      { name: "COMBINED WITH SARA, THEY MAKE A NICKNAME", color: "group-yellow", words: ["BACÍN", "JEVO", "WARMA", "VILLOSO"] },
       { name: "DATES THAT WE WHERE ON (WHEN WE WERE NOT DATING)", color: "group-green", words: ["SUSHI", "TAYLOR", "ROOFTOP", "ICE SKATING"] },
       { name: "NORWAY ROADTRIP STARTER PACK", color: "group-blue", words: ["XC60", "WIPES", "MARSHMALLOWS", "MINK"] },
       { name: "RHYMES WITH GOTHENBURG FRIENDS", color: "group-purple", words: ["CHÂTEAU", "KOREAN", "DILEMMA", "CHIA"] }
@@ -339,26 +347,6 @@
 
     renderGrid();
   </script>
-<script>
-  function scalePage() {
-    const wrapper = document.querySelector('.page-wrapper');
-    const screenWidth = window.innerWidth;
-  
-    if (screenWidth < 1000) {
-      const baseWidth = 400;
-      let scale = screenWidth / baseWidth;
-      scale = Math.min(scale, 2);
-      if (screenWidth < 400) scale *= 1.2;
-      wrapper.style.transform = `scale(${scale})`;
-    } else {
-      wrapper.style.transform = `scale(1)`;
-    }
-    wrapper.style.transformOrigin = 'top center';
-  }
-  scalePage();
-  window.addEventListener('resize', scalePage);
-</script>
-
 </body>
 </html>
 <!-- include feature of one away --> 

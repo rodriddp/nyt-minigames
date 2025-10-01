@@ -1,9 +1,12 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Word Grid — styled</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Strands - HTML/JS</title>
 <style>
+
+  
   html,body { height:100%; margin:0; }
   body {
     font-family: sans-serif;
@@ -35,6 +38,7 @@
 
   .game-wrapper {
     transform-origin: top center;
+    padding: 14px
   }
 
   .game {
@@ -590,30 +594,6 @@ window.addEventListener('mouseup', () => {
 document.addEventListener('touchcancel', handleDocumentTouchEnd, { passive: false });
 
 updateHintButton();
-</script>
-<script>
-  // Dynamic scaling with extra boost for small screens
-  function scaleGame() {
-    const wrapper = document.querySelector('.game-wrapper');
-    const screenWidth = window.innerWidth;
-  
-    if (screenWidth < 1000) {  // Only scale for mobile/tablet
-      const baseWidth = 400; // design width
-      let scale = screenWidth / baseWidth;
-      scale = Math.min(scale, 2); // optional max scale
-      if (screenWidth < 400) scale *= 1.3; // extra boost for very small screens
-      wrapper.style.transform = `scale(${scale})`;
-    } else {
-      wrapper.style.transform = `scale(1)`; // no zoom on desktop
-    }
-  }
-  
-  // Initial scale
-  scaleGame();
-  
-  // Rescale on window resize
-  window.addEventListener('resize', scaleGame);
-  
 </script>
 
 </body>
