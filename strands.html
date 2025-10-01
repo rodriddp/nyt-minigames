@@ -169,32 +169,32 @@
     </div>
     <div class="controls">
       <button class="hint-button">Hint</button>
-      <div class="found-count">0 of 6 theme words found.</div>
+      <div class="found-count">0 of 7 theme words found.</div>
     </div>
 </div>
 
 <script>
 const gridLetters = [
-  "ITARSA".split(''),
-  "URIEMR".split(''),
-  "GIDOHA".split(''),
-  "SRIYPS".split(''),
-  "BIRTAW".split(''),
-  "IPSRWA".split(''),
-  "DTOKOL".split(''),
-  "ENANGE".split('')
+  "ITARDA".split(''),
+  "UOHRIT".split(''),
+  "GMIDAE".split(''),
+  "RESIPW".split(''),
+  "IPRTYS".split(''),
+  "ITSRWA".split(''),
+  "DONKOL".split(''),
+  "EGANGE".split('')
 ];
 const themeWords = ['IRIS','RIPTIDE', 'HOME', 'DIRTYPAWS', 'WORKSONG', 'ANGELA'];
-const spangram = 'GUITARSARA';
+const spangram = 'GUITARDATE';
 const allSolutions = [...themeWords, spangram];
 const wordToPath = {
-  'IRIS':[[1,2],[1,1],[2,1],[3,0]],
-  'RIPTIDE': [[3,1],[4,1],[4,0],[5,0],[5,1],[6,0],[7,0]],
-  'HOME': [[2,4],[2,3],[1,4],[1,3]],
-  'DIRTYPAWS': [[2,2],[3,2],[4,2],[4,3],[3,3],[3,4],[4,4],[4,5],[3,5]],
-  'WORKSONG': [[5,4],[6,4],[5,3],[6,3],[5,2],[6,2],[7,1],[6,1]],
+  'IRIS':[[4,1],[3,1],[2,2],[2,3]],
+  'RIPTIDE': [[3,0],[4,0],[4,1],[5,1],[5,0],[6,0],[7,0]],
+  'HOME': [[1,2],[1,1],[2,1],[3,1]],
+  'DIRTYPAWS': [[2,3],[3,3],[4,2],[4,3],[4,4],[3,4],[2,4],[3,5],[4,5]],
+  'WORKSONG': [[5,4],[6,4],[5,3],[6,3],[5,2],[6,1],[6,2],[7,1]],
   'ANGELA': [[7,2],[7,3],[7,4],[7,5],[6,5],[5,5]],
-  'GUITARSARA': [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5]]
+  'GUITARDATE': [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5]]
 };
 
 // Helper to get [row, col] from a touch/mouse event position relative to grid
@@ -376,7 +376,7 @@ function submit() {
     const className = isSpangram ? 'found-yellow' : 'found-blue';
     currentPath.forEach(([r, c]) => getCell(r, c).classList.add(className));
     found.add(word);
-    foundCountDiv.textContent = `${found.size} of 6 theme words found.`;
+    foundCountDiv.textContent = `${found.size} of 7 theme words found.`;
 
     if (word === currentHintWord) {
       clearHints();
