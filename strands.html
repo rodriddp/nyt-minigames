@@ -10,10 +10,29 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 36px;
+    padding: 96px;
     box-sizing: border-box;
     background: #fafafa;
   }
+  .topbar {
+    width: 100%;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+  
+  .topbar-icon {
+    height: 40px;
+    width: 145px;
+    cursor: pointer;
+  }
+
   .game {
     display: flex;
     flex-direction: column;
@@ -125,7 +144,12 @@
 </style>
 </head>
 <body>
-<div class="game">
+  <div class="topbar">
+    <a href="index.html">
+      <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
+    </a>
+  </div>
+  <div class="game">
     <div class="theme">
         <div class="theme-top">TODAY'S THEME</div>
         <div class="theme-bottom">Planning ahead</div>

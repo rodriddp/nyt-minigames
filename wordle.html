@@ -25,7 +25,25 @@
     display:flex;
     justify-content:center;
     align-items:flex-start;
-    padding:20px;
+    padding:45px 20px 20px 20px;
+  }
+  .topbar {
+    width: 100%;
+    background: #ffffff; /* White bar */
+    border-bottom: 1px solid #e5e7eb; /* Light grey separator line */
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+  
+  .topbar-icon {
+    height: 40px;
+    width: 145px;
+    cursor: pointer;
   }
 
   .container{
@@ -65,7 +83,7 @@
   }
 
   .tile.filled {
-    border-color: #888A8C; /* black border when letter typed */
+    border-color: #888A8C; /* border when letter typed */
   }
 
   /* Colors after evaluation */
@@ -153,6 +171,12 @@
 </style>
 </head>
 <body>
+  <div class="topbar">
+    <a href="index.html">
+      <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
+    </a>
+  </div>
+
   <div class="container">
     <div class="status" id="status"></div>
 
@@ -170,7 +194,7 @@
 <script>
 (function(){
   // ---- Config ----
-  const SOLUTION = "civil"; // <-- change to any 5-letter word (always lowercase)
+  const SOLUTION = "party"; // <-- change to any 5-letter word (always lowercase)
   const MAX_ROWS = 6;
   const WORD_LENGTH = 5;
 
