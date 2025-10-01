@@ -149,6 +149,68 @@
     body {
       padding: 60px 20px 20px;  /* Less left/right padding, top for topbar */
     }
+
+    .letter {
+      width: 60px !important;
+      height: 60px !important;
+      margin: 7.5px !important;
+      font-size: 30px !important;
+    }
+
+    .letter.selected::after,
+    .letter.found-blue::after,
+    .letter.found-yellow::after,
+    .letter.hint-highlight::after {
+      width: 60px !important;
+      height: 60px !important;
+    }
+
+    .grid {
+      padding: 12px !important;
+    }
+
+    .theme-bottom {
+      font-size: 30px !important;
+      padding: 15px !important;
+    }
+
+    .theme-top {
+      font-size: 21px !important;
+      padding: 15px !important;
+    }
+
+    .current-word {
+      font-size: 36px !important;
+    }
+
+    .current-word.error {
+      font-size: 30px !important;
+    }
+
+    .hint-button {
+      font-size: 24px !important;
+      padding: 15px 30px !important;
+      border-radius: 30px !important;
+    }
+
+    .controls {
+      gap: 60px !important;
+      margin-top: 37.5px !important;
+    }
+
+    .found-count {
+      font-size: 18px !important;
+      margin: 6px 0 !important;
+    }
+
+    .topbar-icon {
+      height: 60px !important;
+      width: auto !important;
+    }
+
+    .topbar {
+      padding: 12px 18px !important;
+    }
   }
 </style>
 </head>
@@ -219,8 +281,8 @@ function getCellFromEvent(e) {
   const rect = grid.getBoundingClientRect();
   const x = clientX - rect.left;
   const y = clientY - rect.top;
-  const padding = 8;
-  const cellSize = 50;  // 40px width/height + 10px total margin (5px each side)
+  const padding = window.gridPadding || 8;
+  const cellSize = window.cellSize || 50;
   const adjustedX = x - padding;
   const adjustedY = y - padding;
   const col = Math.floor(adjustedX / cellSize);
@@ -517,9 +579,29 @@ function drawLine(r1, c1, r2, c2, color) {
   line.setAttribute("x2", x2);
   line.setAttribute("y2", y2);
   line.setAttribute("stroke", color);
-  line.setAttribute("stroke-width", "12");
+  line.setAttribute("stroke-width", window.mobile ? "18" : "12");
   line.setAttribute("stroke-linecap", "round");
   edgesSvg.appendChild(line);
+}
+
+function computeSizes() {
+  if (!document.querySelector('.letter')) return;
+  const letter = document.querySelector('.letter');
+  const letterStyle = window.getComputedStyle(letter);
+  const marginTotal = parseFloat(letterStyle.marginLeft) + parseFloat(letterStyle.marginRight);
+  window.cellSize = letter.offsetWidth + marginTotal;
+
+  const gridStyle = window.getComputedStyle(grid);
+  window.gridPadding = parseFloat(gridStyle.paddingLeft);
+
+  window.mobile = window.innerWidth <= 768;
+}
+
+function recomputeAndRedraw() {
+  computeSizes();
+  edgesSvg.setAttribute("width", grid.offsetWidth);
+  edgesSvg.setAttribute("height", grid.offsetHeight);
+  if (currentPath.length > 1 || permanentEdges.length > 0) drawEdges();
 }
 
 /* build grid */
@@ -555,11 +637,10 @@ gridLetters.forEach((rowLetters, r) => {
   grid.appendChild(row);
 });
 
-window.addEventListener('resize', () => {
-  edgesSvg.setAttribute("width", grid.offsetWidth);
-  edgesSvg.setAttribute("height", grid.offsetHeight);
-  if (currentPath.length > 1 || permanentEdges.length > 0) drawEdges();
-});
+// Compute initial sizes after grid is built
+setTimeout(computeSizes, 0);
+
+window.addEventListener('resize', recomputeAndRedraw);
 
 window.addEventListener('mouseup', () => {
   if (mouseDown && hasMoved) {
