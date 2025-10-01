@@ -8,7 +8,7 @@
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       background: #f8f9fa;
       margin: 0;
-      padding: 75px 20px 20px 20px;
+      padding: 100px 20px 20px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -30,6 +30,11 @@
       height: 40px;
       width: 145px;
       cursor: pointer;
+    }
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     h1 {
       font-weight: 400;
@@ -182,21 +187,24 @@
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
   </div>
-  <h1>Create four groups of four!</h1>
-  <div class="grid" id="grid"></div>
-  
-  <div class="lives-container">
-    <div class="lives-label">Mistakes remaining:</div>
-    <div class="lives" id="lives"></div>
+
+  <div class="page-wrapper">
+    <h1>Create four groups of four!</h1>
+    <div class="grid" id="grid"></div>
+
+    <div class="lives-container">
+      <div class="lives-label">Mistakes remaining:</div>
+      <div class="lives" id="lives"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="shuffleTiles()">Shuffle</button>
+      <button class="btn" onclick="deselectAll()">Deselect All</button>
+      <button class="btn" id="submitBtn" onclick="submitSelection()">Submit</button>
+    </div>
+
+    <div id="message" style="margin-top:15px; font-weight:bold;"></div>
   </div>
-  
-  <div class="actions">
-    <button class="btn" onclick="shuffleTiles()">Shuffle</button>
-    <button class="btn" onclick="deselectAll()">Deselect All</button>
-    <button class="btn" id="submitBtn" onclick="submitSelection()">Submit</button>
-  </div>
-  
-  <div id="message" style="margin-top:15px; font-weight:bold;"></div>
 
   <script>
     const categories = [
@@ -331,6 +339,26 @@
 
     renderGrid();
   </script>
+<script>
+  function scalePage() {
+    const wrapper = document.querySelector('.page-wrapper');
+    const screenWidth = window.innerWidth;
+  
+    if (screenWidth < 1000) {
+      const baseWidth = 400;
+      let scale = screenWidth / baseWidth;
+      scale = Math.min(scale, 2);
+      if (screenWidth < 400) scale *= 1.2;
+      wrapper.style.transform = `scale(${scale})`;
+    } else {
+      wrapper.style.transform = `scale(1)`;
+    }
+    wrapper.style.transformOrigin = 'top center';
+  }
+  scalePage();
+  window.addEventListener('resize', scalePage);
+</script>
+
 </body>
 </html>
 <!-- include feature of one away --> 
