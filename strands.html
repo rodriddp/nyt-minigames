@@ -598,7 +598,7 @@ updateHintButton();
     const screenWidth = window.innerWidth;
   
     if (screenWidth < 1000) {  // Only scale for mobile/tablet
-      const baseWidth = 600; // design width
+      const baseWidth = 300; // design width
       let scale = screenWidth / baseWidth;
       scale = Math.min(scale, 1.5); // optional max scale
       if (screenWidth < 400) scale *= 1.3; // extra boost for very small screens
