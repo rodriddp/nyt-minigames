@@ -99,54 +99,78 @@
   </style>
 </head>
 <body>
-  <header>
-    <img src="icons/nyt_games.png" alt="The New York Times Logo" class="nyt-logo">
-    <div class="date">Sunday, 9th of November</div>
-    <small style="color:#6b7280; margin-top:0px;text-align: center;">Recopilación de nuestras aventuras en nuestro formato favorito.</small>
-  </header>
+  <div class="page-wrapper">
+    <header>
+      <img src="icons/nyt_games.png" alt="The New York Times Logo" class="nyt-logo">
+      <div class="date">Sunday, 9th of November</div>
+      <small style="color:#6b7280; margin-top:0px;text-align: center;">Recopilación de nuestras aventuras en nuestro formato favorito.</small>
+    </header>
 
-  <div class="games-list">
-    <!-- Wordle -->
-    <a href="wordle.html" class="game-tile wordle">
-      <div class="game-info">
-        <span class="game-name">Wordle</span>
-        <span class="game-subtitle">A way to make a bit better your least favourite one.</span>
-        <span class="games-date">Sunday, 9 Nov</span>
-      </div>
-      <img src="icons/wordle.png" alt="Wordle Logo" class="game-logo">
-    </a>
+    <div class="games-list">
+      <!-- Wordle -->
+      <a href="wordle.html" class="game-tile wordle">
+        <div class="game-info">
+          <span class="game-name">Wordle</span>
+          <span class="game-subtitle">A way to make a bit better your least favourite one.</span>
+          <span class="games-date">Sunday, 9 Nov</span>
+        </div>
+        <img src="icons/wordle.png" alt="Wordle Logo" class="game-logo">
+      </a>
 
-    <!-- Connections -->
-    <a href="connections.html" class="game-tile connections">
-      <div class="game-info">
-        <span class="game-name">Connections</span>
-        <span class="game-subtitle">Group words from our adventures together.</span>
-        <span class="games-date">Sunday, 9 Nov</span>
-      </div>
-      <img src="icons/connections.png" alt="Connections Logo" class="game-logo">
-    </a>
+      <!-- Connections -->
+      <a href="connections.html" class="game-tile connections">
+        <div class="game-info">
+          <span class="game-name">Connections</span>
+          <span class="game-subtitle">Group words from our adventures together.</span>
+          <span class="games-date">Sunday, 9 Nov</span>
+        </div>
+        <img src="icons/connections.png" alt="Connections Logo" class="game-logo">
+      </a>
 
-    <!-- Strands -->
-    <a href="strands.html" class="game-tile strands">
-      <div class="game-info">
-        <span class="game-name">Strands</span>
-        <span class="game-subtitle">Unravel the hidden theme by connecting letters.</span>
-        <span class="games-date">Sunday, 9 Nov</span>
-      </div>
-      <img src="icons/strands.png" alt="Strands Logo" class="game-logo">
-    </a>
+      <!-- Strands -->
+      <a href="strands.html" class="game-tile strands">
+        <div class="game-info">
+          <span class="game-name">Strands</span>
+          <span class="game-subtitle">Unravel the hidden theme by connecting letters.</span>
+          <span class="games-date">Sunday, 9 Nov</span>
+        </div>
+        <img src="icons/strands.png" alt="Strands Logo" class="game-logo">
+      </a>
 
-    <!-- The Mini -->
-    <a href="mini.html" class="game-tile the-mini">
-      <div class="game-info">
-        <span class="game-name">The Mini</span>
-        <span class="game-subtitle">A quick crossword for when you’re short on time.</span>
-        <span class="games-date">Sunday, 9 Nov</span>
-      </div>
-      <img src="icons/mini.png" alt="The Mini Logo" class="game-logo">
-    </a>
-    <small style="color:#6b7280; margin-top:0px;text-align: center;">Made with ♡ by Rodri</small>
+      <!-- The Mini -->
+      <a href="mini.html" class="game-tile the-mini">
+        <div class="game-info">
+          <span class="game-name">The Mini</span>
+          <span class="game-subtitle">A quick crossword for when you’re short on time.</span>
+          <span class="games-date">Sunday, 9 Nov</span>
+        </div>
+        <img src="icons/mini.png" alt="The Mini Logo" class="game-logo">
+      </a>
+      <small style="color:#6b7280; margin-top:0px;text-align: center;">Made with ♡ by Rodri</small>
+    </div>
   </div>
+
+  <script>
+    function scalePage() {
+      const wrapper = document.querySelector('.page-wrapper');
+      const screenWidth = window.innerWidth;
+
+      if (screenWidth < 1000) {
+        const baseWidth = 400; // approximate design width of your content
+        let scale = screenWidth / baseWidth;
+        scale = Math.min(scale, 2); // optional max scale
+        if (screenWidth < 400) scale *= 1.2; // extra boost for very small screens
+        wrapper.style.transform = `scale(${scale})`;
+      } else {
+        wrapper.style.transform = `scale(1)`; // normal size for desktop
+      }
+      wrapper.style.transformOrigin = 'top center';
+    }
+
+    scalePage(); // initial scale
+    window.addEventListener('resize', scalePage);
+  </script>
+
 </body>
 </html>
 
