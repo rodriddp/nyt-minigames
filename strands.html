@@ -33,6 +33,10 @@
     cursor: pointer;
   }
 
+  .game-wrapper {
+    transform-origin: top center;
+  }
+
   .game {
     display: flex;
     flex-direction: column;
@@ -74,6 +78,12 @@
   .current-word { font-size: 24px; text-align: center; min-height:28px; }
   .current-word.error { font-size: 20px; color: rgb(3, 3, 3); } /* Visual cue for error messages */
 
+  .grid, .letter {
+    user-select: none;        /* standard */
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE/Edge */
+  }
   .grid {
     position: relative;
     display: inline-block;
@@ -153,24 +163,27 @@
 </style>
 </head>
 <body>
+
   <div class="topbar">
     <a href="index.html">
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
   </div>
-  <div class="game">
-    <div class="theme">
-        <div class="theme-top">TODAY'S THEME</div>
-        <div class="theme-bottom">Planning ahead</div>
-    </div>
-    <div class="current-word"></div>
-    <div class="grid">
-        <svg class="edges"></svg>
-    </div>
-    <div class="controls">
-      <button class="hint-button">Hint</button>
+  <div class="game-wrapper">
+    <div class="game">
+      <div class="theme">
+          <div class="theme-top">TODAY'S THEME</div>
+          <div class="theme-bottom">Planning ahead</div>
+      </div>
+      <div class="current-word"></div>
+      <div class="grid">
+          <svg class="edges"></svg>
+      </div>
+      <div class="controls">
+        <button class="hint-button">Hint</button>
       <div class="found-count">0 of 7 theme words found.</div>
     </div>
+  </div>
 </div>
 
 <script>
@@ -501,15 +514,19 @@ function drawEdges() {
 }
 
 function drawLine(r1, c1, r2, c2, color) {
+  const wrapper = document.querySelector('.game-wrapper');
+  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth; // current scale
+
   const cell1 = getCell(r1, c1);
   const cell2 = getCell(r2, c2);
   const rect1 = cell1.getBoundingClientRect();
   const rect2 = cell2.getBoundingClientRect();
   const gridRect = grid.getBoundingClientRect();
-  const x1 = rect1.left - gridRect.left + rect1.width / 2;
-  const y1 = rect1.top - gridRect.top + rect1.height / 2;
-  const x2 = rect2.left - gridRect.left + rect2.width / 2;
-  const y2 = rect2.top - gridRect.top + rect2.height / 2;
+
+  const x1 = (rect1.left - gridRect.left + rect1.width / 2) / scale;
+  const y1 = (rect1.top - gridRect.top + rect1.height / 2) / scale;
+  const x2 = (rect2.left - gridRect.left + rect2.width / 2) / scale;
+  const y2 = (rect2.top - gridRect.top + rect2.height / 2) / scale;
 
   const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
   line.setAttribute("x1", x1);
@@ -521,6 +538,7 @@ function drawLine(r1, c1, r2, c2, color) {
   line.setAttribute("stroke-linecap", "round");
   edgesSvg.appendChild(line);
 }
+
 
 /* build grid */
 gridLetters.forEach((rowLetters, r) => {
@@ -576,6 +594,31 @@ document.addEventListener('touchcancel', handleDocumentTouchEnd, { passive: fals
 
 updateHintButton();
 </script>
+<script>
+  // Dynamic scaling with extra boost for small screens
+  function scaleGame() {
+    const wrapper = document.querySelector('.game-wrapper');
+    const screenWidth = window.innerWidth;
+  
+    if (screenWidth < 768) {  // Only scale for mobile/tablet
+      const baseWidth = 600; // design width
+      let scale = screenWidth / baseWidth;
+      scale = Math.min(scale, 1.5); // optional max scale
+      if (screenWidth < 400) scale *= 1.3; // extra boost for very small screens
+      wrapper.style.transform = `scale(${scale})`;
+    } else {
+      wrapper.style.transform = `scale(1)`; // no zoom on desktop
+    }
+  }
+  
+  // Initial scale
+  scaleGame();
+  
+  // Rescale on window resize
+  window.addEventListener('resize', scaleGame);
+  
+</script>
+
 </body>
 </html>
 <!-- Mostrar SPANGRAM and WORDS when found --> 
