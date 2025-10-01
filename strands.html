@@ -214,36 +214,33 @@ const wordToPath = {
 function getCellFromEvent(e) {
   let clientX, clientY;
   if (e.touches && e.touches.length > 0) {
-    const touch = e.touches[0];
-    clientX = touch.clientX;
-    clientY = touch.clientY;
-  } else if (e.changedTouches && e.changedTouches.length > 0) {
-    const touch = e.changedTouches[0];
-    clientX = touch.clientX;
-    clientY = touch.clientY;
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
   } else if (e.clientX !== undefined) {
-    // Fallback for mouse events (though we won't use it here)
     clientX = e.clientX;
     clientY = e.clientY;
-  } else {
-    return null;
-  }
+  } else return null;
+
+  const wrapper = document.querySelector('.game-wrapper');
+  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
 
   const rect = grid.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
+  const x = (clientX - rect.left) / scale;  // Adjust for scale
+  const y = (clientY - rect.top) / scale;   // Adjust for scale
+
   const padding = 8;
-  const cellSize = 50;  // 40px width/height + 10px total margin (5px each side)
+  const cellSize = 50; // unscaled size
   const adjustedX = x - padding;
   const adjustedY = y - padding;
   const col = Math.floor(adjustedX / cellSize);
   const row = Math.floor(adjustedY / cellSize);
 
-  if (row >= 0 && row < gridLetters.length && col >= 0 && col < 6) {  // 8 rows, 6 cols
+  if (row >= 0 && row < gridLetters.length && col >= 0 && col < 6) {
     return [row, col];
   }
   return null;
 }
+
 
 // Document-level handlers for touch drag (defined here so they're in scope)
 function handleDocumentTouchMove(e) {
