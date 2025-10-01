@@ -600,7 +600,7 @@ updateHintButton();
     const wrapper = document.querySelector('.game-wrapper');
     const screenWidth = window.innerWidth;
   
-    if (screenWidth < 768) {  // Only scale for mobile/tablet
+    if (screenWidth < 1000) {  // Only scale for mobile/tablet
       const baseWidth = 600; // design width
       let scale = screenWidth / baseWidth;
       scale = Math.min(scale, 1.5); // optional max scale
