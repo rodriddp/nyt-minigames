@@ -1,687 +1,526 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mini Crossword (NYT-style) — Demo</title>
-<style>
-  :root{
-    --cell-size: 58px;
-    --gap: 4px;
-    --blue: #cfe8ff;
-    --dark-blue: #a7d0ff;
-    --yellow: #fff7b2;
-    --black: #111;
-    --light-gray: #efefef;
-  }
-  body{
-    font-family: Inter, system-ui, Arial, sans-serif;
-    display:flex;
-    justify-content:center;
-    padding:18px;
-    background:#fff;
-    color:#111;
-  }
-  .container{
-    width: max-content;
-    border: 1px solid #ddd;
-    padding: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    border-radius:8px;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Crossword</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+      padding: 70px;
+    }
+    .topbar {
+        width: 100%;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+      }
+      
+      .topbar-icon {
+        height: 40px;
+        width: 145px;
+        cursor: pointer;
+      }
 
-  header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom:10px;
-  }
-  h1{ font-size:16px; margin:0; }
-  .gear{
-    position:relative;
-  }
-  .gear-btn{
-    background:#f5f5f5;
-    border:none;
-    padding:6px 8px;
-    border-radius:6px;
-    cursor:pointer;
-  }
-  .gear-menu{
-    position:absolute;
-    right:0;
-    top:36px;
-    background:white;
-    border:1px solid #ddd;
-    border-radius:6px;
-    padding:8px;
-    display:none;
-    min-width:180px;
-    box-shadow:0 8px 24px rgba(0,0,0,0.08);
-    z-index:20;
-  }
-  .gear-menu.show{ display:block; }
-  .gear-menu label{display:flex; gap:8px; align-items:center; padding:6px 4px; cursor:pointer;}
-  .gear-menu input{transform:scale(1.1)}
+    .gear-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0px 75px 0px 0px;
+    }
 
-  /* grid */
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(5, var(--cell-size));
-    grid-auto-rows: var(--cell-size);
-    gap: var(--gap);
-    background: transparent;
-  }
-  .cell{
-    position:relative;
-    width:var(--cell-size);
-    height:var(--cell-size);
-    border-radius:6px;
-    box-sizing:border-box;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:26px;
-    user-select:none;
-    cursor:pointer;
-    border: 1px solid #ddd;
-  }
-  .cell.black{
-    background:#111;
-    border:none;
-    cursor:default;
-  }
-  .cell .smallnum{
-    position:absolute;
-    top:4px;
-    left:6px;
-    font-size:10px;
-    color:#333;
-  }
-  .cell .letter{
-    z-index:5;
-  }
+    .gear {
+      cursor: pointer;
+    }
 
-  .word-highlight{
-    background: var(--blue);
-    border:1px solid rgba(0,0,0,0.06);
-  }
-  .selected{
-    background: var(--yellow) !important;
-  }
-  .immutable{
-    background: var(--dark-blue) !important;
-    color:black;
-    font-weight:600;
-    pointer-events:none;
-  }
+    .gear img {
+      width: 20px;
+      height: 20px;
+    }
 
-  /* thin red diagonal for incorrect */
-  .incorrect::after{
-    content: "";
-    position:absolute;
-    z-index:12;
-    width:2px;
-    height: calc(var(--cell-size) + 6px);
-    background: rgba(220,40,40,0.9);
-    transform: rotate(45deg);
-    right:-5px;
-    top:-6px;
-    pointer-events:none;
-  }
+    .dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      min-width: 130px;
+      z-index: 10;
+      overflow: hidden;
 
-  .controls{
-    margin-top:12px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
-  .cluebox{
-    flex:1;
-    padding:10px;
-    background:#fbfbfb;
-    border-radius:8px;
-    border:1px solid #eee;
-    min-width:220px;
-    font-size:14px;
-  }
-  .nav{
-    display:flex;
-    gap:6px;
-    align-items:center;
-  }
-  .nav button{
-    padding:8px 12px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    background:white;
-    cursor:pointer;
-  }
-  .clue-number{
-    font-weight:600;
-    margin-right:8px;
-  }
-  footer{
-    margin-top:10px;
-    font-size:12px;
-    color:#666;
-  }
+    }
 
-  /* responsive */
-  @media (max-width:420px){
-    :root{ --cell-size:52px;}
-    body{ padding:8px;}
-  }
-</style>
+    .dropdown div {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #000;
+      transition: background-color 0.15s ease-in-out;
+    }
+
+    .dropdown div:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-template-rows: repeat(6, 60px);
+      border: 0px solid black;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border: none;
+      position: relative;
+      font-size: 26px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 60px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    input.cell {
+      text-transform: uppercase;
+      font-size: 26px;
+      font-weight: 500;
+      text-align: center;
+      padding: 0;
+      margin: 0;
+      border: none;
+      caret-color: transparent;
+    }
+
+    input.cell:focus {
+      outline: none;
+      border: 1px solid black;
+    }
+
+    .black {
+      background: black;
+      cursor: default;
+      border: none;
+    }
+
+    .number {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 10px;
+    }
+
+    .highlight {
+      background: #add8e6 !important;
+    }
+
+    .selected {
+      background: gold !important;
+    }
+
+    .checkmark {
+      background: lightblue !important;
+      color: black;
+    }
+
+    .error {
+      background-image: linear-gradient(135deg, transparent 49%, red 49%, red 51%, transparent 51%);
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+    }
+
+    .clue-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      width: 350px;
+      margin-top: 20px;
+      background: #B0D6FB;
+      padding: 12px 20px;
+      border-radius: 0px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .clue-box button {
+      background: none;
+      border: none;
+      color: black;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 16px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .clue-box button:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    #clue {
+      font-size: 16px;
+      color: black;
+      text-align: center;
+      flex: 1;
+      margin: 0;
+    }
+
+  </style>
 </head>
 <body>
-  <div class="container" id="app">
-    <header>
-      <h1>Mini Crossword — Demo</h1>
-      <div class="gear">
-        <button class="gear-btn" id="gearBtn">⚙️</button>
-        <div class="gear-menu" id="gearMenu">
-          <label><input type="checkbox" id="chkPuzzle"> Check puzzle (on click)</label>
-          <label><input type="checkbox" id="chkWord"> Check word (on click)</label>
-          <label><input type="checkbox" id="chkLetter"> Check letter (on click)</label>
+    <div class="topbar">
+        <a href="index.html">
+          <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
+        </a>
+        <div class="gear-container">
+          <div class="gear">
+            <img src="icons/gear.png" alt="Settings">
+          </div>
+          <div class="dropdown" id="dropdown">
+            <div onclick="checkPuzzle()">Check Puzzle</div>
+            <div onclick="checkWord()">Check Word</div>
+            <div onclick="checkLetter()">Check Letter</div>
+          </div>
         </div>
-      </div>
-    </header>
-
-    <!-- GRID -->
-    <div class="grid" id="grid"></div>
-
-    <!-- Hidden input to capture keyboard (makes mobile keyboard appear) -->
-    <input id="hiddenInput" maxlength="1" style="opacity:0; position:fixed; left:-9999px;">
-
-    <div class="controls">
-      <div class="nav">
-        <button id="prevBtn">&lt;</button>
-        <button id="nextBtn">&gt;</button>
-      </div>
-      <div class="cluebox" id="clueBox">
-        <div><span class="clue-number" id="clueNum">1</span><span id="clueText">Placeholder clue</span></div>
-      </div>
     </div>
 
-    <footer>
-      Tip: click a tile to select word. Type on keyboard (or mobile keyboard) to fill. Use gear to enable check options.
-    </footer>
+  <div class="grid" id="grid"></div>
+
+  <div class="clue-box">
+    <button onclick="previousWord()">❮</button>
+    <div id="clue">Clue will appear here</div>
+    <button onclick="nextWord()">❯</button>
   </div>
 
-<script>
-/*
-  Grid layout (6 rows x 5 cols).
-  '#' for black squares, letters are the solution.
-  Provided pattern:
-  ##VOI
-  #CATS
-  #ALTO
-  BLUE#
-  TIER#
-  C####
-*/
+  <script>
+    // === SOLUTION GRID ===
+    const solution = [
+      ["#", "#", "V", "O", "I"],
+      ["#", "C", "A", "T", "S"],
+      ["#", "A", "L", "T", "O"],
+      ["B", "L", "U", "E", "#"],
+      ["T", "I", "E", "R", "#"],
+      ["C", "#", "#", "#", "#"]
+    ];
 
-const SOLUTION_MAP = [
-  ['#','#','V','O','I'],
-  ['#','C','A','T','S'],
-  ['#','A','L','T','O'],
-  ['B','L','U','E','#'],
-  ['T','I','E','R','#'],
-  ['C','#','#','#','#']
-];
+    // === WORDS ===
+    let words = [
+      // Across
+      {number:1, dir:"across", cells:[[0,2],[0,3],[0,4]], clue:"1 Across placeholder"},
+      {number:2, dir:"across", cells:[[1,1],[1,2],[1,3],[1,4]], clue:"2 Across placeholder"},
+      {number:3, dir:"across", cells:[[2,1],[2,2],[2,3],[2,4]], clue:"3 Across placeholder"},
+      {number:4, dir:"across", cells:[[3,0],[3,1],[3,2],[3,3]], clue:"4 Across placeholder"},
+      {number:5, dir:"across", cells:[[4,0],[4,1],[4,2],[4,3]], clue:"5 Across placeholder"},
 
-const ROWS = SOLUTION_MAP.length;
-const COLS = SOLUTION_MAP[0].length;
+      // Down
+      {number:6, dir:"down", cells:[[0,2],[1,2],[2,2],[3,2],[4,2]], clue:"6 Down placeholder"},
+      {number:7, dir:"down", cells:[[1,1],[2,1],[3,1],[4,1]], clue:"7 Down placeholder"},
+      {number:8, dir:"down", cells:[[3,0],[4,0],[5,0]], clue:"8 Down placeholder"},
+      {number:9, dir:"down", cells:[[0,3],[1,3],[2,3],[3,3],[4,3]], clue:"9 Down placeholder"},
+      {number:10, dir:"down", cells:[[0,4],[1,4],[2,4]], clue:"10 Down placeholder"}
+    ];
 
-/* Placeholder clues: fill with your real clues.
-   Keys are 'across' and 'down' with word objects filled automatically.
-*/
-const CLUES = {
-  across: {
-    // example: 1: "LeBron's sport, informally"
-    // fill values after generating numbering OR edit these keys if you want
-  },
-  down: {
-  }
-};
+    // Sort by number, then across before down
+    words = words.sort((a, b) => a.number - b.number || (a.dir === "across" ? -1 : 1));
 
-const gridEl = document.getElementById('grid');
-const hiddenInput = document.getElementById('hiddenInput');
-const clueBox = document.getElementById('clueBox');
-const clueNumEl = document.getElementById('clueNum');
-const clueTextEl = document.getElementById('clueText');
+    const gridEl = document.getElementById("grid");
+    const clueEl = document.getElementById("clue");
+    const dropdown = document.getElementById("dropdown");
+    let selectedWordIndex = null;
+    let selectedCellIndex = null;
+    let currentR = -1;
+    let currentC = -1;
+    const cells = [];
 
-let cells = []; // flat array of cell objects {r,c,el,letter,black,num}
-let numbering = {}; // mapping r,c -> number if start
-let words = []; // list of words {id,dir:'across'|'down',number,coords:[{r,c}],answer,clue}
-let selected = { wordIndex: null, orientation: 'across', cellIdx:0 }; // selection state
-
-// build grid cells and DOM
-function buildGrid(){
-  gridEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
-  gridEl.innerHTML = '';
-  cells = [];
-  let countNumber = 0;
-
-  // function to check if cell starts across or down word
-  function startsAcross(r,c){
-    if(SOLUTION_MAP[r][c] === '#') return false;
-    // must have either left cell black or at left edge, and right cell not black
-    return (c===0 || SOLUTION_MAP[r][c-1] === '#') && (c+1 < COLS && SOLUTION_MAP[r][c+1] !== '#');
-  }
-  function startsDown(r,c){
-    if(SOLUTION_MAP[r][c] === '#') return false;
-    return (r===0 || SOLUTION_MAP[r-1][c] === '#') && (r+1 < ROWS && SOLUTION_MAP[r+1][c] !== '#');
-  }
-
-  // create number assignment (classic across+down numbering)
-  let num = 0;
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      if(SOLUTION_MAP[r][c] === '#') continue;
-      if(startsAcross(r,c) || startsDown(r,c)){
-        num++;
-        numbering[`${r},${c}`] = num;
+    function handleAfterInput(r, c) {
+      cells[r][c].classList.remove("error");
+      if (selectedWordIndex !== null) {
+        const word = words[selectedWordIndex];
+        const [cr, cc] = word.cells[selectedCellIndex];
+        if (cr === r && cc === c) {
+          if (selectedCellIndex < word.cells.length - 1) {
+            const nextIdx = selectedCellIndex + 1;
+            const [nr, nc] = word.cells[nextIdx];
+            selectWord(selectedWordIndex, nextIdx);
+          } else {
+            // Jump to the first letter of the next word after inputting the last letter
+            const nextWordIdx = (selectedWordIndex + 1) % words.length;
+            selectWord(nextWordIdx, 0);
+          }
+        }
       }
     }
-  }
 
-  // Build cells DOM
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const el = document.createElement('div');
-      el.className = 'cell';
-      el.dataset.r = r;
-      el.dataset.c = c;
-      if(SOLUTION_MAP[r][c] === '#'){
-        el.classList.add('black');
-        gridEl.appendChild(el);
-        cells.push({r,c,el,black:true});
-        continue;
+    function createGrid() {
+        for (let r = 0; r < 6; r++) {
+          cells[r] = [];
+          for (let c = 0; c < 5; c++) {
+            let cell;
+            if (solution[r][c] === "#") {
+              cell = document.createElement("div");
+              cell.classList.add("cell", "black");
+            } else {
+              cell = document.createElement("input");
+              cell.type = "text";
+              cell.maxLength = 1;
+              cell.classList.add("cell");
+              cell.addEventListener("click", () => handleCellClick(r, c));
+              cell.addEventListener("focus", () => handleCellFocus(r, c));
+              cell.addEventListener("input", (e) => handleCellInput(e, r, c));
+              cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
+            }
+            gridEl.appendChild(cell);
+            cells[r][c] = cell;
+      
+            // Set all borders to 1px #606060 (uniform internal color)
+            cell.style.border = '1px solid #606060';
+      
+            // Override outer edges to 2px black
+            if (c === 0) {
+              cell.style.borderLeft = '2px solid black';
+            }
+            if (r === 0) {
+              cell.style.borderTop = '2px solid black';
+            }
+            if (c === 4) {
+              cell.style.borderRight = '2px solid black';
+            }
+            if (r === 5) {
+              cell.style.borderBottom = '2px solid black';
+            }
+          }
+        }
+        // Add numbers to first cells of words
+        words.forEach(w => {
+          const [r, c] = w.cells[0];
+          const cell = cells[r][c];
+          if (solution[r][c] !== "#" && !cell.querySelector(".number")) {
+            const num = document.createElement("div");
+            num.classList.add("number");
+            num.textContent = w.number;
+            cell.style.position = "relative";
+            cell.appendChild(num);
+          }
+        });
       }
-      // add small number if any
-      const numKey = `${r},${c}`;
-      if(numbering[numKey]){
-        const sn = document.createElement('div');
-        sn.className = 'smallnum';
-        sn.textContent = numbering[numKey];
-        el.appendChild(sn);
+
+    function handleCellClick(r, c) {
+      const isCurrent = currentR === r && currentC === c && selectedWordIndex !== null;
+      if (isCurrent) {
+        const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+        const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+        if (acrossIdx !== -1 && downIdx !== -1) {
+          const targetIdx = selectedWordIndex === acrossIdx ? downIdx : acrossIdx;
+          const cellIdx = words[targetIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
+          selectWord(targetIdx, cellIdx);
+          return;
+        }
       }
-
-      const letterSpan = document.createElement('div');
-      letterSpan.className = 'letter';
-      letterSpan.textContent = '';
-      el.appendChild(letterSpan);
-
-      el.addEventListener('click', ()=> onCellClick(r,c));
-      gridEl.appendChild(el);
-      cells.push({r,c,el,black:false,letter:'',immutable:false,incorrect:false});
+      selectCellDefault(r, c);
     }
-  }
-}
 
-// derive words (across & down) from solution map and numbering
-function buildWords(){
-  words = [];
-  // across
-  for(let r=0;r<ROWS;r++){
-    let c=0;
-    while(c<COLS){
-      if(SOLUTION_MAP[r][c] === '#'){ c++; continue; }
-      // start of potential across
-      let start = c;
-      while(c<COLS && SOLUTION_MAP[r][c] !== '#') c++;
-      const length = c - start;
-      if(length >= 2){
-        const coords = [];
-        for(let cc=start; cc<start+length; cc++) coords.push({r, c:cc});
-        const n = numbering[`${r},${start}`] || '';
-        const answer = coords.map(p => SOLUTION_MAP[p.r][p.c]).join('');
-        words.push({dir:'across', number: n, coords, answer, clue: CLUES.across[n] || '/* put across clue here */'});
+    function handleCellFocus(r, c) {
+      if (currentR !== r || currentC !== c) {
+        selectCellDefault(r, c);
       }
     }
-  }
-  // down
-  for(let c=0;c<COLS;c++){
-    let r=0;
-    while(r<ROWS){
-      if(SOLUTION_MAP[r][c] === '#'){ r++; continue; }
-      let start = r;
-      while(r<ROWS && SOLUTION_MAP[r][c] !== '#') r++;
-      const length = r - start;
-      if(length >= 2){
-        const coords = [];
-        for(let rr=start; rr<start+length; rr++) coords.push({r:rr, c});
-        const n = numbering[`${start},${c}`] || '';
-        const answer = coords.map(p => SOLUTION_MAP[p.r][p.c]).join('');
-        words.push({dir:'down', number: n, coords, answer, clue: CLUES.down[n] || '/* put down clue here */'});
+
+    function handleCellInput(e, r, c) {
+      let val = e.data ? e.data.toUpperCase() : e.target.value.toUpperCase();
+
+      if (e.target.disabled) {
+        e.target.value = solution[r][c]; // restore correct answer if immutable
+        return;
+      }
+
+      // Replace old letter with new one
+      e.target.value = val.slice(-1);
+
+      if (e.target.value.length === 1) {
+        handleAfterInput(r, c);
+      } else {
+        e.target.classList.remove("error");
       }
     }
-  }
-  // sort words for consistent prev/next order: by number then across before down
-  words.sort((a,b)=>{
-    if(a.number !== b.number) return (a.number||0) - (b.number||0);
-    if(a.dir === b.dir) return 0;
-    return a.dir === 'across' ? -1 : 1;
-  });
-}
 
-// helper: get cell object from r,c
-function getCell(r,c){ return cells.find(x => x.r===r && x.c===c); }
+    function handleCellKeyDown(e, r, c) {
+      const cell = cells[r][c];
+      if (cell.disabled) return;
 
-// UI: update highlight for selected word and tile
-function updateHighlights(){
-  // clear all word-highlight, selected, incorrect visuals, immutable stays
-  cells.forEach(cell => {
-    if(cell.black) return;
-    cell.el.classList.remove('word-highlight','selected','immutable','incorrect');
-    // if immutable flagged in data, add class
-    if(cell.immutable) cell.el.classList.add('immutable');
-    // if incorrect flagged
-    if(cell.incorrect) cell.el.classList.add('incorrect');
-    // set letter text
-    const span = cell.el.querySelector('.letter');
-    span.textContent = cell.letter || '';
-  });
-
-  if(selected.wordIndex === null) return;
-  const word = words[selected.wordIndex];
-  word.coords.forEach((p, idx) => {
-    const cell = getCell(p.r,p.c);
-    if(!cell || cell.black) return;
-    // highlight whole word in blue, but if immutable keep its color
-    if(!cell.immutable) cell.el.classList.add('word-highlight');
-    // set selected tile (yellow)
-    if(idx === selected.cellIdx){
-      cell.el.classList.add('selected');
+      if (e.key === "Backspace") {
+        if (cell.value !== "") {
+          // just clear current cell
+          cell.value = "";
+          e.preventDefault();
+        } else if (selectedWordIndex !== null && selectedCellIndex > 0) {
+          // move to previous cell if empty
+          const prevIdx = selectedCellIndex - 1;
+          const [pr, pc] = words[selectedWordIndex].cells[prevIdx];
+          selectWord(selectedWordIndex, prevIdx);
+          cells[pr][pc].value = "";
+          e.preventDefault();
+        }
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        // Handle typing a letter: replace the current cell's value
+        const newVal = e.key.toUpperCase();
+        cell.value = newVal;
+        e.preventDefault(); // Prevent default insertion to ensure clean replacement
+        handleAfterInput(r, c);
+      }
     }
-  });
 
-  // update clue area
-  const w = words[selected.wordIndex];
-  clueNumEl.textContent = w.number || '';
-  clueTextEl.textContent = w.clue || '/* add clue here */';
-}
-
-// click behaviour rules:
-// - clicking a tile selects the containing word; default selects across word.
-// - if clicked again on same tile, toggle to the other orientation (if exists).
-// - if tile is start of a down word but in middle of across, it will highlight down first.
-function findWordContaining(r,c, dirPref='across'){
-  // find words that contain r,c
-  const candidates = words.map((w,i)=> ({w,i})).filter(x=> x.w.coords.some(p=>p.r===r && p.c===c));
-  if(candidates.length===0) return null;
-  // if only one candidate return that
-  if(candidates.length===1) return candidates[0];
-  // if two (across and down)
-  // We must implement "If the tile is the start of a word down but in the middle of an across word it will highlight first the down word."
-  // So check if this tile is a start of down
-  const isStartOfDown = words.some(x=> x.dir==='down' && x.coords[0].r===r && x.coords[0].c===c);
-  if(isStartOfDown) {
-    // choose down first
-    const down = candidates.find(x=> x.w.dir==='down'); if(down) return down;
-  }
-  // else prefer dirPref
-  const pref = candidates.find(x=> x.w.dir===dirPref);
-  if(pref) return pref;
-  return candidates[0];
-}
-
-function onCellClick(r,c){
-  const cell = getCell(r,c);
-  if(!cell || cell.black) return;
-  const found = findWordContaining(r,c, 'across');
-  if(!found) return;
-  const idx = found.i;
-  // if clicking same cell within same word -> toggle orientation if other exist
-  if(selected.wordIndex === idx){
-    // try to toggle to the other word that contains this cell (if any)
-    const other = words.findIndex((w,i) => i!==idx && w.coords.some(p=>p.r===r && p.c===c));
-    if(other !== -1){
-      selected.wordIndex = other;
-      // set selected.cellIdx to coordinate index within new word
-      const cw = words[other];
-      selected.cellIdx = cw.coords.findIndex(p=>p.r===r && p.c===c);
-      // focus hidden input
-      focusHiddenInput();
-      updateHighlights();
-      return;
+    function selectCellDefault(r, c) {
+      const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+      const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+      let chosenIdx = -1;
+      if (acrossIdx !== -1) {
+        chosenIdx = acrossIdx;
+      } else if (downIdx !== -1) {
+        chosenIdx = downIdx;
+      }
+      if (chosenIdx === -1) return;
+      const cellIdx = words[chosenIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
+      selectWord(chosenIdx, cellIdx);
+      currentR = r;
+      currentC = c;
     }
-  }
-  // otherwise select found word, set selected cell index to clicked position
-  selected.wordIndex = idx;
-  const cw = words[idx];
-  selected.cellIdx = cw.coords.findIndex(p=>p.r===r && p.c===c);
-  // focus hidden input to capture typing (and trigger mobile keyboard)
-  focusHiddenInput();
-  updateHighlights();
-}
 
-/* keyboard handling and typing */
-function focusHiddenInput(){
-  hiddenInput.value = '';
-  hiddenInput.focus();
-  // move cursor so mobile opens keyboard
-  setTimeout(()=> hiddenInput.focus(),50);
-}
-hiddenInput.addEventListener('input', e=>{
-  const val = e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
-  if(!val) return;
-  handleLetterInput(val.charAt(0));
-  e.target.value = ''; // reset
-});
-
-document.addEventListener('keydown', (ev)=>{
-  // support backspace
-  if(ev.key === 'Backspace'){
-    onBackspace();
-    ev.preventDefault();
-    return;
-  }
-  // allow letters on physical keyboard when hiddenInput not present
-  if(ev.key.length === 1 && /[a-zA-Z]/.test(ev.key)){
-    handleLetterInput(ev.key.toUpperCase());
-    ev.preventDefault();
-    return;
-  }
-});
-
-// handle letter typed into current selected tile and auto-advance to next tile in word
-function handleLetterInput(ch){
-  if(selected.wordIndex === null) return;
-  const w = words[selected.wordIndex];
-  const pos = w.coords[selected.cellIdx];
-  const cell = getCell(pos.r,pos.c);
-  if(!cell || cell.black || cell.immutable) return;
-  cell.letter = ch;
-  cell.incorrect = false; // clear incorrect overlay when typed
-  // after writing, auto-advance to next non-immutable tile in same word
-  let nextIdx = selected.cellIdx + 1;
-  while(nextIdx < w.coords.length){
-    const p = w.coords[nextIdx];
-    const cobj = getCell(p.r,p.c);
-    if(!cobj.immutable) break;
-    nextIdx++;
-  }
-  if(nextIdx < w.coords.length){
-    selected.cellIdx = nextIdx;
-  } else {
-    // reach end — keep at last cell
-    selected.cellIdx = w.coords.length - 1;
-  }
-  // If the gears option Check word/letter/puzzle are enabled and clicking check on input is desired you can add triggers — but we provide buttons to run checks manually.
-  updateHighlights();
-}
-
-// backspace: clear selected tile and move back
-function onBackspace(){
-  if(selected.wordIndex === null) return;
-  const w = words[selected.wordIndex];
-  // if current cell empty, move back to previous filled cell or previous slot
-  let idx = selected.cellIdx;
-  let pos = w.coords[idx];
-  let cobj = getCell(pos.r,pos.c);
-  if(!cobj.letter){
-    // move left/back skipping immutable
-    let prev = idx - 1;
-    while(prev >= 0){
-      const p = w.coords[prev];
-      const cprev = getCell(p.r,p.c);
-      if(!cprev.immutable) break;
-      prev--;
+    function selectWord(wordIndex, cellIndex = 0) {
+      clearHighlights();
+      selectedWordIndex = wordIndex;
+      selectedCellIndex = cellIndex;
+      const wordCells = words[wordIndex].cells;
+      wordCells.forEach(([rr, cc]) => {
+        const cell = cells[rr][cc];
+        if (solution[rr][cc] !== "#") {
+          cell.classList.add("highlight");
+        }
+      });
+      const [sr, sc] = wordCells[cellIndex];
+      const selCell = cells[sr][sc];
+      selCell.classList.add("selected");
+      if (selCell.tagName === "INPUT") {
+        if (selCell.disabled) {
+          selCell.disabled = false;
+          selCell.classList.remove("checkmark");
+        }
+        selCell.focus();
+        // Select all text in the input to ensure typing replaces it
+        selCell.select();
+      }
+      clueEl.textContent = words[wordIndex].clue;
+      currentR = sr;
+      currentC = sc;
     }
-    if(prev >= 0) idx = prev;
-  }
-  // clear cell
-  const target = w.coords[idx];
-  const tcell = getCell(target.r,target.c);
-  if(tcell && !tcell.immutable){
-    tcell.letter = '';
-    tcell.incorrect = false;
-    selected.cellIdx = idx;
-    updateHighlights();
-  }
-}
 
-// Checks: puzzle, word, letter
-function checkPuzzle(){
-  // check all filled tiles; correct => make immutable (light blue), incorrect => mark with red diagonal until removed
-  cells.forEach(c => {
-    if(c.black) return;
-    if(!c.letter) return;
-    const sol = SOLUTION_MAP[c.r][c.c];
-    if(c.letter === sol){
-      c.immutable = true;
-      c.incorrect = false;
-    } else {
-      c.incorrect = true;
-      // leave letter there until removed
+    function clearHighlights() {
+      for (let rr = 0; rr < 6; rr++) {
+        for (let cc = 0; cc < 5; cc++) {
+          if (solution[rr][cc] !== "#") {
+            cells[rr][cc].classList.remove("highlight", "selected");
+          }
+        }
+      }
     }
-  });
-  updateHighlights();
-}
-function checkWord(){
-  if(selected.wordIndex === null) return;
-  const w = words[selected.wordIndex];
-  w.coords.forEach(p=>{
-    const c = getCell(p.r,p.c);
-    if(!c.letter) return;
-    const sol = SOLUTION_MAP[p.r][p.c];
-    if(c.letter === sol){
-      c.immutable = true;
-      c.incorrect = false;
-    } else c.incorrect = true;
-  });
-  updateHighlights();
-}
-function checkLetter(){
-  if(selected.wordIndex === null) return;
-  const w = words[selected.wordIndex];
-  const p = w.coords[selected.cellIdx];
-  const c = getCell(p.r,p.c);
-  if(!c.letter) return;
-  const sol = SOLUTION_MAP[p.r][p.c];
-  if(c.letter === sol){
-    c.immutable = true;
-    c.incorrect = false;
-  } else {
-    c.incorrect = true;
-  }
-  updateHighlights();
-}
 
-// Prev/Next word navigation
-const prevBtn = document.getElementById('prevBtn'), nextBtn = document.getElementById('nextBtn');
-prevBtn.addEventListener('click', ()=> {
-  if(words.length === 0) return;
-  if(selected.wordIndex === null) { selected.wordIndex = 0; selected.cellIdx = 0; updateHighlights(); return;}
-  selected.wordIndex = (selected.wordIndex - 1 + words.length) % words.length;
-  selected.cellIdx = 0;
-  focusHiddenInput();
-  updateHighlights();
-});
-nextBtn.addEventListener('click', ()=> {
-  if(words.length === 0) return;
-  if(selected.wordIndex === null) { selected.wordIndex = 0; selected.cellIdx = 0; updateHighlights(); return;}
-  selected.wordIndex = (selected.wordIndex + 1) % words.length;
-  selected.cellIdx = 0;
-  focusHiddenInput();
-  updateHighlights();
-});
+    function nextWord() {
+      if (selectedWordIndex === null) {
+        selectWord(0, 0);
+      } else {
+        const nextIdx = (selectedWordIndex + 1) % words.length;
+        selectWord(nextIdx, 0);
+      }
+    }
 
-// gear dropdown behaviour and check options
-const gearBtn = document.getElementById('gearBtn');
-const gearMenu = document.getElementById('gearMenu');
-gearBtn.addEventListener('click', ()=> {
-  gearMenu.classList.toggle('show');
-});
-document.addEventListener('click', (ev)=> {
-  if(!gearMenu.contains(ev.target) && ev.target !== gearBtn) gearMenu.classList.remove('show');
-});
+    function previousWord() {
+      if (selectedWordIndex === null) {
+        const prevIdx = words.length - 1;
+        selectWord(prevIdx, 0);
+      } else {
+        const prevIdx = (selectedWordIndex - 1 + words.length) % words.length;
+        selectWord(prevIdx, 0);
+      }
+    }
 
-// Wire check toggles: clicking them runs immediate check on selected region
-document.getElementById('chkPuzzle').addEventListener('change', (e)=> {
-  if(e.target.checked){
-    checkPuzzle();
-    // uncheck after action (behaviour similar to "run check"): keep/uncheck depends on UX; we'll uncheck for convenience
-    e.target.checked = false;
-  }
-});
-document.getElementById('chkWord').addEventListener('change', (e)=> {
-  if(e.target.checked){
-    checkWord();
-    e.target.checked = false;
-  }
-});
-document.getElementById('chkLetter').addEventListener('change', (e)=> {
-  if(e.target.checked){
-    checkLetter();
-    e.target.checked = false;
-  }
-});
+    // === CHECKING FUNCTIONS ===
+    function checkPuzzle() {
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (solution[r][c] === "#") continue;
+          const cell = cells[r][c];
+          cell.classList.remove("checkmark", "error");
+          if (cell.tagName === "INPUT" && cell.disabled) cell.disabled = false;
+          const val = cell.value;
+          if (val === solution[r][c]) {
+            cell.classList.add("checkmark");
+            if (cell.tagName === "INPUT") cell.disabled = true;
+          } else if (val !== "") {
+            cell.classList.add("error");
+          }
+        }
+      }
+    }
 
-// initialize
-buildGrid();
-buildWords();
+    function checkWord() {
+      if (selectedWordIndex === null) return;
+      const wcells = words[selectedWordIndex].cells;
+      wcells.forEach(([r, c]) => {
+        const cell = cells[r][c];
+        cell.classList.remove("checkmark", "error");
+        if (cell.tagName === "INPUT" && cell.disabled) cell.disabled = false;
+        const val = cell.value;
+        if (val === solution[r][c]) {
+          cell.classList.add("checkmark");
+          if (cell.tagName === "INPUT") cell.disabled = true;
+        } else if (val !== "") {
+          cell.classList.add("error");
+        }
+      });
+    }
 
-// Set initial selection to first word
-if(words.length) {
-  selected.wordIndex = 0;
-  selected.cellIdx = 0;
-  updateHighlights();
-}
+    function checkLetter() {
+      if (selectedWordIndex === null || selectedCellIndex === null) return;
+      const [r, c] = words[selectedWordIndex].cells[selectedCellIndex];
+      const cell = cells[r][c];
+      cell.classList.remove("checkmark", "error");
+      if (cell.tagName === "INPUT" && cell.disabled) cell.disabled = false;
+      const val = cell.value;
+      if (val === solution[r][c]) {
+        cell.classList.add("checkmark");
+        if (cell.tagName === "INPUT") cell.disabled = true;
+      } else if (val !== "") {
+        cell.classList.add("error");
+      }
+    }
 
-// Display words/clues in console to help you place clues; also show their number, orientation and length
-console.log('Words (number - dir - length - answer):');
-words.forEach((w,i)=> console.log(`${w.number} - ${w.dir} - ${w.coords.length} - ${w.answer}`));
+    // === SETTINGS GEAR ===
+    document.querySelector(".gear").addEventListener("click", () => {
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
 
-/* ---- PLACEHOLDERS FOR CLUES ----
-   Fill the CLUES.across and CLUES.down objects with the numbers printed in the console
-   Example:
-   CLUES.across[1] = "LeBron's sport, informally";
-   CLUES.down[2]  = "Another clue here";
-   After editing the CLUES object, run buildWords() and updateHighlights() again or simply reload the page.
-*/
-
-// Example: as an illustration, here's how to set some clues (replace with your real clues)
-CLUES.across = {
-  // use numbers as shown in the console
-  // put real across clues here:
-  // e.g. "1": "LeBron's sport, informally"
-};
-CLUES.down = {
-  // put real down clues here:
-};
-
-// Re-attach clues into words array (so that word.clue shows your placeholder)
-words.forEach(w=>{
-  w.clue = (w.dir === 'across' ? CLUES.across[w.number] : CLUES.down[w.number]) || w.clue;
-});
-updateHighlights();
-
-</script>
+    createGrid();
+  </script>
 </body>
 </html>
