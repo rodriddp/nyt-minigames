@@ -35,7 +35,7 @@
     }
 
     .page-wrapper {
-      transform: scale(0.7); /* scale the rest of the page */
+      transform: scale(0.8); /* scale the rest of the page */
       transform-origin: top center;
       text-align: center;
     }
@@ -60,11 +60,14 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      font-size: 14px;
-      font-weight: 580;
+      font-size: 15px;
+      font-weight: bold;
       cursor: pointer;
       transition: background 0.2s, transform 0.2s;
       user-select: none;
+      -webkit-user-select: none; /* Chrome/Safari */
+      -moz-user-select: none;    /* Firefox */
+      -ms-user-select: none;     /* IE/Edge */
     }
     .tile.selected {
       background: #59594E;
@@ -150,6 +153,9 @@
       cursor: pointer;
       font-weight: bold;
       transition: background 0.2s, transform 0.2s;
+      -webkit-appearance: none;  /* Disables iOS button styling */
+      appearance: none;          /* Standard fallback */
+      -webkit-tap-highlight-color: transparent;  /* Removes iOS tap glow */
     }
     .btn:hover {
       background: #e9ecef;
