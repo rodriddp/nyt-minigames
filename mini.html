@@ -106,6 +106,9 @@
       margin: 0;
       border: none;
       caret-color: transparent;
+      -webkit-appearance: none;  /* Disables iOS-specific styling */
+      -webkit-border-radius: 0;  /* Explicitly removes rounding on WebKit browsers */
+      border-radius: 0;          /* Fallback for other browsers */
     }
 
     input.cell:focus {
