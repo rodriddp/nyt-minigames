@@ -306,7 +306,8 @@
               cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
               cell.addEventListener("select", (e) => e.preventDefault());
               cell.addEventListener("copy", (e) => e.preventDefault());
-              cell.addEventListener("paste", (e) => e.preventDefault());
+              cell.addEventListener("contextmenu", (e) => e.preventDefault()); // Block right-click menu
+              cell.addEventListener("dragstart", (e) => e.preventDefault());
             }
             gridEl.appendChild(cell);
             cells[r][c] = cell;
