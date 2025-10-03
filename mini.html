@@ -109,6 +109,10 @@
       -webkit-appearance: none;  /* Disables iOS-specific styling */
       -webkit-border-radius: 0;  /* Explicitly removes rounding on WebKit browsers */
       border-radius: 0;          /* Fallback for other browsers */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
     input.cell:focus {
@@ -293,6 +297,8 @@
               cell.addEventListener("focus", () => handleCellFocus(r, c));
               cell.addEventListener("input", (e) => handleCellInput(e, r, c));
               cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
+              cell.addEventListener("select", (e) => e.preventDefault());
+              cell.addEventListener("copy", (e) => e.preventDefault());
             }
             gridEl.appendChild(cell);
             cells[r][c] = cell;
@@ -406,8 +412,6 @@
       if (chosenIdx === -1) return;
       const cellIdx = words[chosenIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
       selectWord(chosenIdx, cellIdx);
-      currentR = r;
-      currentC = c;
     }
 
     function selectWord(wordIndex, cellIndex = 0) {
@@ -422,6 +426,8 @@
         }
       });
       const [sr, sc] = wordCells[cellIndex];
+      currentR = sr;
+      currentC = sc;
       const selCell = cells[sr][sc];
       selCell.classList.add("selected");
       if (selCell.tagName === "INPUT") {
@@ -430,12 +436,8 @@
           selCell.classList.remove("checkmark");
         }
         selCell.focus();
-        // Select all text in the input to ensure typing replaces it
-        selCell.select();
       }
       clueEl.textContent = words[wordIndex].clue;
-      currentR = sr;
-      currentC = sc;
     }
 
     function clearHighlights() {
