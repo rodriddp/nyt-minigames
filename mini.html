@@ -306,6 +306,7 @@
               cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
               cell.addEventListener("select", (e) => e.preventDefault());
               cell.addEventListener("copy", (e) => e.preventDefault());
+              cell.addEventListener("paste", (e) => e.preventDefault());
             }
             gridEl.appendChild(cell);
             cells[r][c] = cell;
