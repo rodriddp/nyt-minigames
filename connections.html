@@ -151,6 +151,7 @@
     <a href="index.html">
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
+    <button class="btn" style="margin-left:auto; margin-right: 30px;" onclick="newGame()">New Game</button>
   </div>
   <div class="page-wrapper">
     <h1>Create four groups of four!</h1>
@@ -195,6 +196,70 @@
     const matrix = new DOMMatrix(transformStyle);
     const scale = matrix.a;
 
+    // === LOCAL STORAGE HANDLING ===
+
+  function saveGameState() {
+    const state = {
+      words,
+      mistakes,
+      solvedGroups,
+      // save the outerHTML and the category color class
+      fusedTilesHTML: fusedTiles.map(tile => tile.outerHTML),
+      fusedTilesClasses: fusedTiles.map(tile => {
+        // find the class that starts with "group-"
+        return Array.from(tile.classList).find(c => c.startsWith("group-")) || "";
+      })
+    };
+    localStorage.setItem("connectionsGameState", JSON.stringify(state));
+  }
+  
+  function loadGameState() {
+    const saved = localStorage.getItem("connectionsGameState");
+    if (!saved) return false;
+  
+    try {
+      const state = JSON.parse(saved);
+      if (state.words) words = state.words;
+      mistakes = state.mistakes ?? 4;
+      solvedGroups = state.solvedGroups ?? 0;
+  
+      fusedTiles = [];
+      if (state.fusedTilesHTML && state.fusedTilesClasses) {
+        state.fusedTilesHTML.forEach((html, i) => {
+          const div = document.createElement("div");
+          div.innerHTML = html;
+          const tile = div.firstElementChild;
+  
+          // Remove any previous group-* class and re-apply saved class
+          tile.classList.forEach(c => {
+            if (c.startsWith("group-")) tile.classList.remove(c);
+          });
+          if (state.fusedTilesClasses[i]) {
+            tile.classList.add(state.fusedTilesClasses[i]);
+          }
+  
+          fusedTiles.push(tile);
+        });
+      }
+  
+      return true;
+    } catch (e) {
+      console.error("Error loading saved game:", e);
+      return false;
+    }
+  }
+
+
+function clearGameState() {
+  localStorage.removeItem("connectionsGameState");
+}
+
+function newGame() {
+  clearGameState();
+  location.reload();
+}
+
+    
     function renderLives() {
       livesContainer.innerHTML = "";
       for (let i = 0; i < mistakes; i++) {
@@ -212,6 +277,7 @@
         lastLife.classList.add("shrink");
         lastLife.addEventListener("animationend", () => {
           lastLife.remove();
+          saveGameState();
         }, { once: true });
       }
     }
@@ -469,6 +535,7 @@
 
       solvedGroups++;
       deselectAll();
+      saveGameState();
     }
 
     async function revealAllGroups() {
@@ -505,6 +572,7 @@
           document.getElementById("submitBtn").disabled = true;
           await revealAllGroups();
         }
+        saveGameState();
         deselectAll();
 
         if (isOneAway) {
@@ -661,6 +729,7 @@
       words = words.filter(w => !wordsChosen.includes(w));
 
       solvedGroups++;
+      saveGameState();
       if (solvedGroups === 4) {
         document.getElementById("submitBtn").disabled = true;
       }
@@ -681,7 +750,27 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    // Try to load previous session from localStorage
+    if (loadGameState()) {
+      console.log("Loaded saved game state.");
+    } else {
+      console.log("No saved state found, starting fresh.");
+    }
+
+    // Render grid after loading
     renderGrid();
+
+    // If there were solved groups, add them back into the grid
+    if (fusedTiles.length > 0) {
+      [...fusedTiles].reverse().forEach(tile => {
+        adjustFont(tile);
+        grid.prepend(tile);
+      });
+    }
+    
+
+    renderLives();
+
   </script>
 </body>
 </html>
