@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=0.9" />
 <title>Strands - HTML/JS</title>
 <style>
-
-  
   html,body { height:100%; margin:0; }
   body {
     font-family: sans-serif;
@@ -29,84 +27,82 @@
     left: 0;
     z-index: 1000;
   }
-  
   .topbar-icon {
     height: 40px;
     width: 145px;
     cursor: pointer;
   }
-
   .game-wrapper {
     transform-origin: top center;
     padding: 14px
   }
-
   .game {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
   }
-
   .theme {
     display: flex;
     flex-direction: column;
     width: 100%;
     border-radius: 10px;
   }
-  
   .theme-top {
     background: lightblue;
-    height: 25%; /* 1/4 of the parent height */
+    height: 25%;
     padding: 10px;
     font-size: 14px;
-    font-weight: 400; /* Thin text */
+    font-weight: 400;
     text-align: center;
     color: black;
     border-radius: 10px 10px 0 0;
   }
-  
   .theme-bottom {
     background: white;
-    height: 75%; /* 3/4 of the parent height */
+    height: 75%;
     padding: 10px;
     font-size: 20px;
-    font-weight: bold; /* Bold text */
+    font-weight: bold;
     text-align: center;
     color: black;
-    border: 1px solid #d3d3d3; /* 1px light grey border */
-    border-top: none; /* Avoid double border with top */
-    border-radius: 0 0 10px 10px; /* Rounded bottom edges */
+    border: 1px solid #d3d3d3;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
   }
   .found-count { margin: 4px 0; }
   .current-word { font-size: 24px; text-align: center; min-height:28px; }
-  .current-word.error { font-size: 20px; color: rgb(3, 3, 3); } /* Visual cue for error messages */
-
+  .current-word.error { font-size: 20px; color: rgb(3, 3, 3); }
   .grid, .letter {
-    user-select: none;        /* standard */
-    -webkit-user-select: none; /* Chrome/Safari */
-    -moz-user-select: none;    /* Firefox */
-    -ms-user-select: none;     /* IE/Edge */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
   .grid {
     position: relative;
     display: inline-block;
-    padding: 8px;
+    padding: 12px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    touch-action: none;  /* Prevents default touch scroll/zoom on letters */
+    touch-action: none;
   }
-
   .row { display: flex; }
   .letter {
-    width: 40px; height: 40px; margin: 5px;
+    width: 40px; height: 40px; margin: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; cursor: pointer; color: black;
+    font-size: 20px; color: black;
     position: relative; user-select: none; z-index: 1;
-    touch-action: none;  /* Prevents default touch scroll/zoom on letters */
   }
-
+  .letter-event-area {
+    width: 26px; height: 26px;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    touch-action: none;
+  }
   .letter.selected::after,
   .letter.found-blue::after,
   .letter.found-yellow::after {
@@ -121,7 +117,6 @@
   .letter.selected::after { background: #DBD8C7; }
   .letter.found-blue::after { background: #B8DEEC; }
   .letter.found-yellow::after { background: #F1D046; }
-
   .letter.hint-highlight::after {
     content: "";
     position: absolute;
@@ -135,13 +130,11 @@
     border: 2px dashed lightblue;
     background: transparent;
   }
-
   .hint-button {
     background: white; color: black; border: 1px solid #333;
     border-radius: 20px; padding: 10px 20px; cursor: pointer; font-size: 16px;
   }
   .inverted { background: black; color: white; }
-
   .controls {
     display: flex;
     align-items: center;
@@ -149,7 +142,6 @@
     justify-content: center;
     margin-top: 25px;
   }
-
   svg.edges {
     position: absolute;
     top: 0; left: 0;
@@ -157,17 +149,14 @@
     z-index: 0;
     overflow: visible;
   }
-
-  /* Optional: Reduce padding for mobile fit (add media query) */
   @media (max-width: 768px) {
     body {
-      padding: 60px 20px 20px;  /* Less left/right padding, top for topbar */
+      padding: 60px 20px 20px;
     }
   }
 </style>
 </head>
 <body>
-
   <div class="topbar">
     <a href="index.html">
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
@@ -185,11 +174,10 @@
       </div>
       <div class="controls">
         <button class="hint-button">Hint</button>
-      <div class="found-count">0 of 7 theme words found.</div>
+        <div class="found-count">0 of 7 theme words found.</div>
+      </div>
     </div>
   </div>
-</div>
-
 <script>
 const gridLetters = [
   "ITARDA".split(''),
@@ -205,7 +193,7 @@ const themeWords = ['IRIS','RIPTIDE', 'HOME', 'DIRTYPAWS', 'WORKSONG', 'ANGELA']
 const spangram = 'GUITARDATE';
 const allSolutions = [...themeWords, spangram];
 const wordToPath = {
-  'IRIS':[[4,1],[3,1],[2,2],[2,3]],
+  'IRIS':[[1,4],[1,3],[2,2],[3,2]],
   'RIPTIDE': [[3,0],[4,0],[4,1],[5,1],[5,0],[6,0],[7,0]],
   'HOME': [[1,2],[1,1],[2,1],[3,1]],
   'DIRTYPAWS': [[2,3],[3,3],[4,2],[4,3],[4,4],[3,4],[2,4],[3,5],[4,5]],
@@ -227,13 +215,11 @@ function getCellFromEvent(e) {
 
   const wrapper = document.querySelector('.game-wrapper');
   const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
-
   const rect = grid.getBoundingClientRect();
-  const x = (clientX - rect.left) / scale;  // Adjust for scale
-  const y = (clientY - rect.top) / scale;   // Adjust for scale
-
+  const x = (clientX - rect.left) / scale;
+  const y = (clientY - rect.top) / scale;
   const padding = 8;
-  const cellSize = 50; // unscaled size
+  const cellSize = 56; // 40px (cell) + 16px (2 * 8px margin)
   const adjustedX = x - padding;
   const adjustedY = y - padding;
   const col = Math.floor(adjustedX / cellSize);
@@ -245,8 +231,7 @@ function getCellFromEvent(e) {
   return null;
 }
 
-
-// Document-level handlers for touch drag (defined here so they're in scope)
+// Document-level handlers for touch drag
 function handleDocumentTouchMove(e) {
   e.preventDefault();
   const pos = getCellFromEvent(e);
@@ -259,14 +244,12 @@ function handleDocumentTouchMove(e) {
 function handleDocumentTouchEnd(e) {
   e.preventDefault();
   let endR = startR;
-  let endC = startC;  // Fallback to start if finger off-grid
+  let endC = startC;
   const pos = getCellFromEvent(e);
   if (pos) {
     [endR, endC] = pos;
   }
   handleMouseUp(endR, endC);
-
-  // Clean up listeners
   document.removeEventListener('touchmove', handleDocumentTouchMove, { passive: false });
   document.removeEventListener('touchend', handleDocumentTouchEnd, { passive: false });
 }
@@ -326,12 +309,9 @@ function handleHint() {
   if (hintsAvailable <= 0) return;
   spentHints += 1;
   updateHintButton();
-  
   if (currentHintWord) return;
-
   const unsolved = themeWords.filter(w => !found.has(w));
   if (unsolved.length === 0) return;
-  
   currentHintWord = unsolved[Math.floor(Math.random() * unsolved.length)];
   const path = wordToPath[currentHintWord];
   path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
@@ -383,7 +363,7 @@ function submit() {
     clearPath();
     return;
   }
-  usedWords.add(lower); // Add valid word to usedWords
+  usedWords.add(lower);
   if (allSolutions.includes(word)) {
     console.log(`Found solution word: ${word}`);
     const isSpangram = word === spangram;
@@ -391,12 +371,10 @@ function submit() {
     currentPath.forEach(([r, c]) => getCell(r, c).classList.add(className));
     found.add(word);
     foundCountDiv.textContent = `${found.size} of 7 theme words found.`;
-
     if (word === currentHintWord) {
       clearHints();
       currentHintWord = null;
     }
-
     for (let i = 1; i < currentPath.length; i++) {
       const [r1, c1] = currentPath[i - 1];
       const [r2, c2] = currentPath[i];
@@ -426,7 +404,6 @@ function handleMouseDown(r, c) {
 
 function handleMouseMove(r, c, event) {
   if (!mouseDown) return;
-  // For mouse: check buttons; for touch: skip (touchmove implies drag)
   if (event.type === 'mousemove' && event.buttons !== 1) return;
   if (!hasMoved) {
     hasMoved = true;
@@ -436,13 +413,10 @@ function handleMouseMove(r, c, event) {
     currentWordDiv.textContent = word;
     drawEdges();
   }
-
   const pos = [r, c];
   const last = currentPath[currentPath.length - 1];
-
   if (isAdjacent(last, pos)) {
     const indexInPath = currentPath.findIndex(p => p[0] === r && p[1] === c);
-
     if (indexInPath === -1) {
       currentPath.push(pos);
       getCell(r, c).classList.add('selected');
@@ -453,7 +427,6 @@ function handleMouseMove(r, c, event) {
       }
       currentPath = currentPath.slice(0, indexInPath + 1);
     }
-
     const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
     currentWordDiv.textContent = word;
     drawEdges();
@@ -474,9 +447,7 @@ function handleMouseUp(r, c) {
         const last = currentPath[currentPath.length - 1];
         if (last[0] === r && last[1] === c) {
           submit();
-          return;
-        }
-        if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
+        } else if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
           currentPath.push(pos);
           getCell(r, c).classList.add('selected');
         } else {
@@ -498,11 +469,9 @@ function getCell(r, c) {
 
 function drawEdges() {
   edgesSvg.innerHTML = "";
-
   for (const [r1, c1, r2, c2, color] of permanentEdges) {
     drawLine(r1, c1, r2, c2, color);
   }
-
   for (let i = 1; i < currentPath.length; i++) {
     const [r1, c1] = currentPath[i - 1];
     const [r2, c2] = currentPath[i];
@@ -516,19 +485,16 @@ function drawEdges() {
 
 function drawLine(r1, c1, r2, c2, color) {
   const wrapper = document.querySelector('.game-wrapper');
-  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth; // current scale
-
+  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
   const cell1 = getCell(r1, c1);
   const cell2 = getCell(r2, c2);
   const rect1 = cell1.getBoundingClientRect();
   const rect2 = cell2.getBoundingClientRect();
   const gridRect = grid.getBoundingClientRect();
-
   const x1 = (rect1.left - gridRect.left + rect1.width / 2) / scale;
   const y1 = (rect1.top - gridRect.top + rect1.height / 2) / scale;
   const x2 = (rect2.left - gridRect.left + rect2.width / 2) / scale;
   const y2 = (rect2.top - gridRect.top + rect2.height / 2) / scale;
-
   const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
   line.setAttribute("x1", x1);
   line.setAttribute("y1", y1);
@@ -540,7 +506,6 @@ function drawLine(r1, c1, r2, c2, color) {
   edgesSvg.appendChild(line);
 }
 
-
 /* build grid */
 gridLetters.forEach((rowLetters, r) => {
   const row = document.createElement('div');
@@ -549,26 +514,22 @@ gridLetters.forEach((rowLetters, r) => {
     const letDiv = document.createElement('div');
     letDiv.classList.add('letter');
     letDiv.textContent = letter;
-
-    // Mouse events (unchanged)
-    letDiv.addEventListener('mousedown', () => handleMouseDown(r, c));
-    letDiv.addEventListener('mousemove', (event) => handleMouseMove(r, c, event));
-    letDiv.addEventListener('mouseup', () => handleMouseUp(r, c));
-
-    // Touch events (new)
-    letDiv.addEventListener('touchstart', (e) => {
+    const eventArea = document.createElement('span');
+    eventArea.classList.add('letter-event-area');
+    eventArea.addEventListener('mousedown', () => handleMouseDown(r, c));
+    eventArea.addEventListener('mousemove', (event) => handleMouseMove(r, c, event));
+    eventArea.addEventListener('mouseup', () => handleMouseUp(r, c));
+    eventArea.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const pos = getCellFromEvent(e);
       if (pos) {
-        const [tr, tc] = pos;  // Use calculated pos in case of slight offset
+        const [tr, tc] = pos;
         handleMouseDown(tr, tc);
-
-        // Capture drag on document for smooth movement across cells
         document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
         document.addEventListener('touchend', handleDocumentTouchEnd, { passive: false });
       }
     }, { passive: false });
-
+    letDiv.appendChild(eventArea);
     row.appendChild(letDiv);
   });
   grid.appendChild(row);
@@ -595,7 +556,6 @@ document.addEventListener('touchcancel', handleDocumentTouchEnd, { passive: fals
 
 updateHintButton();
 </script>
-
 </body>
 </html>
 <!-- Mostrar SPANGRAM and WORDS when found --> 
