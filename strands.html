@@ -103,6 +103,19 @@
     cursor: pointer;
     touch-action: none;
   }
+  .letter.hint-highlight::after {
+    content: "";
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -2;
+    border: 2px dashed lightblue;
+    background: transparent;
+  }
   .letter.selected::after,
   .letter.found-blue::after,
   .letter.found-yellow::after {
@@ -117,19 +130,7 @@
   .letter.selected::after { background: #DBD8C7; }
   .letter.found-blue::after { background: #B8DEEC; }
   .letter.found-yellow::after { background: #F1D046; }
-  .letter.hint-highlight::after {
-    content: "";
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -1;
-    border: 2px dashed lightblue;
-    background: transparent;
-  }
+  
   .hint-button {
     background: white; color: black; border: 1px solid #333;
     border-radius: 20px; padding: 10px 20px; cursor: pointer; font-size: 16px;
@@ -149,6 +150,8 @@
     z-index: 0;
     overflow: visible;
   }
+  .current-word.success-theme { color: #B8DEEC; }
+  .current-word.success-spangram { color: #F1D046; }
   @media (max-width: 768px) {
     body {
       padding: 60px 20px 20px;
@@ -355,6 +358,7 @@ function submit() {
   if (usedWords.has(lower)) {
     console.log(`Word ${lower} already in usedWords, showing message`);
     showMessage("Word already found...");
+    clearPath(); // Clear path when word is already used
     return;
   }
   if (!words.has(lower)) {
@@ -370,7 +374,7 @@ function submit() {
     const className = isSpangram ? 'found-yellow' : 'found-blue';
     currentPath.forEach(([r, c]) => getCell(r, c).classList.add(className));
     found.add(word);
-    foundCountDiv.textContent = `${found.size} of 7 theme words found.`;
+    foundCountDiv.textContent = `${found.size} of ${themeWords.length + 1} theme words found.`;
     if (word === currentHintWord) {
       clearHints();
       currentHintWord = null;
@@ -378,16 +382,28 @@ function submit() {
     for (let i = 1; i < currentPath.length; i++) {
       const [r1, c1] = currentPath[i - 1];
       const [r2, c2] = currentPath[i];
-      let color = className === 'found-blue' ? "#B8DEEC" : (className === 'found-yellow' ? "#F1D046" : "#DBD8C7");
+      let color = className === 'found-blue' ? "#B8DEEC" : "#F1D046";
       permanentEdges.push([r1, c1, r2, c2, color]);
     }
+    // Display the word or "SPANGRAM!" with appropriate styling
+    currentWordDiv.textContent = isSpangram ? 'SPANGRAM!' : word;
+    currentWordDiv.classList.remove('error', 'success-theme', 'success-spangram');
+    currentWordDiv.classList.add(isSpangram ? 'success-spangram' : 'success-theme');
+    drawEdges();
+    // Ensure the message stays visible for 3 seconds
+    setTimeout(() => {
+      currentWordDiv.textContent = '';
+      currentWordDiv.classList.remove('success-theme', 'success-spangram');
+      clearPath();
+      checkGameOver(); // Check if the game is complete
+    }, 3000);
   } else {
     console.log(`Valid but non-solution word: ${lower}, mistakeCount: ${mistakeCount + 1}`);
     mistakeCount += 1;
     updateHintButton();
     showMessage("Not a theme word...");
+    clearPath();
   }
-  clearPath();
 }
 
 function handleMouseDown(r, c) {
@@ -558,9 +574,6 @@ updateHintButton();
 </script>
 </body>
 </html>
-<!-- Mostrar SPANGRAM and WORDS when found --> 
 <!-- Clear path when word already found-->
 <!-- path on top of hint-->
-<!-- finish game -->
 <!-- back to minigames button -->
-<!-- hints black when totally filled -->
