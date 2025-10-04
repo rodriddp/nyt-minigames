@@ -3,199 +3,115 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Connections - HTML/JS</title>
+<title>Connections - HTML/JS (animated, fixed)</title>
 <style>
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #f8f9fa;
+    margin: 0;
+    padding: 75px 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .topbar {
+    width: 100%;
+    background: #ffffff; 
+    border-bottom: 1px solid #e5e7eb; 
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+  .topbar-icon { height: 40px; width: 145px; cursor: pointer; }
 
-    body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 75px 20px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .topbar {
-      width: 100%;
-      background: #ffffff; 
-      border-bottom: 1px solid #e5e7eb; 
-      display: flex;
-      align-items: center;
-      padding: 8px 12px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-    }
-    
-    .topbar-icon {
-      height: 40px;
-      width: 145px;
-      cursor: pointer;
-    }
+  .page-wrapper {
+    transform: scale(0.8);
+    transform-origin: top center;
+    text-align: center;
+  }
+  h1 { font-weight: 400; font-size: 15px; margin-bottom: 20px; color: #515043; }
 
-    .page-wrapper {
-      transform: scale(0.8); /* scale the rest of the page */
-      transform-origin: top center;
-      text-align: center;
-    }
-    h1 {
-      font-weight: 400;
-      font-size: 15px;
-      margin-bottom: 20px;
-      color: #515043;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 100px);
-      grid-auto-rows: 100px;
-      gap: 10px;
-      width: max-content;
-      position: relative;
-    }
-    .tile {
-      background: #EFEFE6;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
-      user-select: none;
-      -webkit-user-select: none; /* Chrome/Safari */
-      -moz-user-select: none;    /* Firefox */
-      -ms-user-select: none;     /* IE/Edge */
-    }
-    .tile.selected {
-      background: #59594E;
-      color: #F8F8F8;
-      transform: scale(1.05);
-    }
-    .tile.correct {
-      cursor: default;
-      color: white;
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-auto-rows: 100px;
+    gap: 10px;
+    width: max-content;
+    position: relative;
+  }
+  .tile {
+    background: #EFEFE6;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /*font-size: 14px;*/
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    user-select: none;
+  }
+  .tile.selected { background: #59594E; color: #F8F8F8; transform: scale(1.05); }
+  .tile.correct { cursor: default; color: white; }
 
-    .group-yellow { background: #fbe48c; }  /* warm pastel yellow */
-    .group-green  { background: #9dd296; }  /* minty pastel green */
-    .group-blue   { background: #91b9e3; }  /* soft sky blue */
-    .group-purple { background: #c5a3d8; }  /* gentle lilac */
+  .group-yellow { background: #fbe48c; }
+  .group-green  { background: #9dd296; }
+  .group-blue   { background: #91b9e3; }
+  .group-purple { background: #c5a3d8; }
 
-    /* Shake animation */
-    @keyframes shake {
-      0%   { transform: translateX(0); }
-      10%  { transform: translateX(-5px); }
-      20%  { transform: translateX(5px); }
-      30%  { transform: translateX(-5px); }
-      40%  { transform: translateX(5px); }
-      50%  { transform: translateX(-5px); }
-      60%  { transform: translateX(5px); }
-      70%  { transform: translateX(-5px); }
-      80%  { transform: translateX(5px); }
-      90%  { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
-    }
-    .tile.shake {
-      animation: shake 1s;
-    }
-    
-    /* Lives */
-    .lives-container {
-      display: flex;
-      align-items: center;
-      margin: 20px 0;
-      gap: 10px;
-    }
-    .lives-label {
-      font-weight: 400;
-      font-size: 15px;
-      color: #515043;
-    }
-    .lives {
-      display: flex;
-      gap: 8px;
-    }
-    .life {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 2px solid #59594E;
-      background: #59594E;
-    }
-    .life.shrink {
-      animation: shrinkOut 0.4s forwards;
-    }
-    @keyframes shrinkOut {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(0); opacity: 0; }
-    }
+  @keyframes shake { 0%{transform:translateX(0)}10%{transform:translateX(-5px)}20%{transform:translateX(5px)}30%{transform:translateX(-5px)}40%{transform:translateX(5px)}50%{transform:translateX(-5px)}60%{transform:translateX(5px)}70%{transform:translateX(-5px)}80%{transform:translateX(5px)}90%{transform:translateX(-5px)}100%{transform:translateX(0)} }
+  .tile.shake { animation: shake 1s; }
 
-    /* Buttons */
-    .actions {
-      display: flex;
-      gap: 15px;
-      margin-top: 10px;
-    }
-    .actions, .lives-container {
-      display: flex;
-      justify-content: center;  /* center children horizontally */
-      gap: 15px;
-      width: 100%;
-    }
-    .btn {
-      padding: 10px 20px;
-      border: 1px solid #333;
-      border-radius: 25px;
-      background: white;
-      cursor: pointer;
-      font-weight: bold;
-      color: black;
-      transition: background 0.2s, transform 0.2s;
-      -webkit-appearance: none;  /* Disables iOS button styling */
-      appearance: none;          /* Standard fallback */
-      -webkit-tap-highlight-color: transparent;  /* Removes iOS tap glow */
-    }
-    .btn:hover {
-      background: #e9ecef;
-      transform: scale(1.05);
-    }
-    .btn:disabled {
-      background: #f0f0f0;
-      color: #999;
-      border-color: #ccc;
-      cursor: not-allowed;
-    }
+  .lives-container { display:flex; align-items:center; margin:20px 0; gap:10px; }
+  .lives-label { font-weight:400; font-size:15px; color:#515043; }
+  .lives { display:flex; gap:8px; }
+  .life { width:12px; height:12px; border-radius:50%; border:2px solid #59594E; background:#59594E; }
+  .life.shrink { animation: shrinkOut 0.4s forwards; }
+  @keyframes shrinkOut { 0%{transform:scale(1);opacity:1}100%{transform:scale(0);opacity:0} }
 
-    /* Long fused tile */
-    .long-tile {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      border-radius: 8px;
-      color: black;
-      font-size: 14px;
-      font-weight: bold;
-      grid-column: span 4;
-      padding: 5px;
-      transform: translateY(-10px);
-      opacity: 0;
-      transition: transform 0.5s ease-out, opacity 0.5s ease-out;
-    }
-    .long-tile.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    .long-tile .subtitle {
-      font-weight: 400;
-      font-size: 14px;
-      text-align: center;
-    }
-  </style>
+  .actions { display:flex; gap:15px; margin-top:10px; justify-content:center; width:100%; }
+  .btn {
+    padding: 10px 20px; border:1px solid #333; border-radius:25px; background:white; cursor:pointer; font-weight:bold; color:black;
+    transition: background 0.2s, transform 0.2s; -webkit-appearance:none; appearance:none; -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover { background:#e9ecef; transform:scale(1.05); }
+  .btn:disabled { background:#f0f0f0; color:#999; border-color:#ccc; cursor:not-allowed; }
+
+  .long-tile {
+    display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;
+    border-radius:8px; color:black; font-size:14px; font-weight:bold; grid-column:span 4; padding:5px;
+    transform: translateY(-10px); opacity:0; transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  }
+  .long-tile.show { transform: translateY(0); opacity:1; }
+  .long-tile .subtitle { font-weight:400; font-size:14px; text-align:center; }
+
+  /* overlay clones used for animation */
+  .anim-overlay {
+    position: fixed;
+    left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000;
+  }
+  .anim-clone {
+    position: absolute;
+    border-radius: 8px;
+    display:flex; justify-content:center; align-items:center; text-align:center; font-weight:bold;
+    transition: transform 0.5s cubic-bezier(.2,.8,.2,1), width 0.25s ease, height 0.25s ease, left 0.5s cubic-bezier(.2,.8,.2,1), top 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease;
+    box-sizing: border-box;
+    padding: 6px;
+  }
+  .merge-clone {
+    transition: transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+  }
+
+  /* helper: text inside merge clone */
+  .merge-title { font-weight:700; font-size:14px; line-height:1.1; text-align:center; padding:2px 8px; }
+  .merge-sub { font-weight:400; font-size:14px; text-align:center; opacity:1; padding-top:0px; }
+
+</style>
 </head>
 <body>
   <div class="topbar">
@@ -221,6 +137,9 @@
     <div id="message" style="margin-top:15px; font-weight:bold;"></div>
   </div>
 
+  <!-- overlay used for animation clones -->
+  <div id="animOverlay" class="anim-overlay" aria-hidden="true"></div>
+
   <script>
     const categories = [
       { name: "THEY FORM A NICKNAME WHEN COMBINED WITH SARA", color: "group-yellow", words: ["BACÍN", "JEVO", "WARMA", "VILLOSO"] },
@@ -233,10 +152,16 @@
     const grid = document.getElementById("grid");
     const message = document.getElementById("message");
     const livesContainer = document.getElementById("lives");
+    const animOverlay = document.getElementById("animOverlay");
     let selected = [];
     let mistakes = 4;
     let solvedGroups = 0;
     let fusedTiles = [];
+
+    const pageWrapper = document.querySelector('.page-wrapper');
+    const transformStyle = window.getComputedStyle(pageWrapper).transform;
+    const matrix = new DOMMatrix(transformStyle);
+    const scale = matrix.a;
 
     function renderLives() {
       livesContainer.innerHTML = "";
@@ -261,6 +186,7 @@
 
     function renderGrid() {
       grid.innerHTML = "";
+      // fused tiles are rendered first (top)
       fusedTiles.forEach(tile => grid.appendChild(tile));
       words.forEach(word => {
         const div = document.createElement("div");
@@ -304,59 +230,272 @@
       }
     }
 
-    function submitSelection() {
-      if (selected.length !== 4) {
-        return;
-      }
+    // Helper: create an absolute-positioned clone at the same rect
+    function createCloneFromElement(el) {
+      const rect = el.getBoundingClientRect();
+      const clone = document.createElement("div");
+      clone.className = "anim-clone";
+      clone.style.left = rect.left + "px";
+      clone.style.top = rect.top + "px";
+      clone.style.width = rect.width + "px";
+      clone.style.height = rect.height + "px";
+      clone.style.fontSize = (parseFloat(window.getComputedStyle(el).fontSize) * scale) + "px";
+      clone.style.background = window.getComputedStyle(el).backgroundColor;
+      clone.style.color = window.getComputedStyle(el).color;
+      clone.textContent = el.textContent;
+      clone.dataset.original = el.textContent;
+
+      // Apply scale adjustments for visual consistency
+      clone.style.borderRadius = (8 * scale) + "px";
+      clone.style.padding = (6 * scale) + "px";
+
+      animOverlay.appendChild(clone);
+      return { clone, rect };
+    }
+
+    // Find topmost available row tiles (within remaining unfused grid)
+    function findTopRowTiles() {
+      // All `.tile` elements (fused long tiles are not '.tile' but '.long-tile')
+      const tileEls = Array.from(grid.querySelectorAll('.tile'));
+      // top row are first 4 tiles in DOM order that belong to grid (accounting for grid columns)
+      // If fewer than 4 tiles remain, return however many there are.
+      return tileEls.slice(0, 4);
+    }
+
+    // main submit flow with animation for correct group
+    async function submitSelection() {
+      if (selected.length !== 4) return;
+
       const wordsChosen = selected.map(t => t.textContent);
       const foundCategory = categories.find(cat =>
         cat.words.every(w => wordsChosen.includes(w))
       );
 
-      if (foundCategory) {
-        words = words.filter(w => !wordsChosen.includes(w));
-
-        const longTile = document.createElement("div");
-        longTile.className = "long-tile " + foundCategory.color;
-        longTile.innerHTML = `<div class="title">${foundCategory.name}</div>
-                              <div class="subtitle">${foundCategory.words.join(", ")}</div>`;
-        fusedTiles.push(longTile);
-
-        renderGrid();
-
-        adjustFont(longTile.querySelector(".subtitle"));
-
-        setTimeout(() => longTile.classList.add("show"), 50);
-
-        solvedGroups++;
-
-        if (solvedGroups === 4) {
-          document.getElementById("submitBtn").disabled = true;
-        }
-
-        deselectAll();
-      } else {
+      if (!foundCategory) {
+        // incorrect
         mistakes--;
         loseLife();
         selected.forEach(tile => {
           tile.classList.add("shake");
-          tile.addEventListener("animationend", () => {
-            tile.classList.remove("shake");
-          }, { once: true });
+          tile.addEventListener("animationend", () => tile.classList.remove("shake"), { once: true });
         });
         if (mistakes === 0) {
-            categories.map(c => `${c.name}: ${c.words.join(", ")}`).join("\n");
           document.getElementById("submitBtn").disabled = true;
         }
         deselectAll();
+        return;
       }
+
+      // CORRECT: animate sequence
+      // 1) Identify the topmost available row tiles (the first 4 .tile elements)
+      const topRowTiles = findTopRowTiles();
+
+      // Save DOM nodes & rects
+      const selectedTiles = [...selected]; // array of tile DOM elements (4)
+      const allTileEls = Array.from(grid.querySelectorAll('.tile'));
+      const selectedRects = selectedTiles.map(t => t.getBoundingClientRect());
+      const topRects = topRowTiles.map(t => t.getBoundingClientRect());
+
+      // Determine top-row tiles that are NOT selected (we will only create clones for those)
+      const topNonSelected = topRowTiles.filter(t => !selectedTiles.includes(t));
+      const topNonSelectedRects = topNonSelected.map(t => t.getBoundingClientRect());
+
+      // Create clones for selected tiles (always create)
+      const clones = [];
+      selectedTiles.forEach(t => {
+        t.style.visibility = 'hidden';
+        clones.push(createCloneFromElement(t));
+      });
+
+      // Create clones for top-row tiles that are not selected (avoid duplicating clones for tiles that are in both sets)
+      const topClones = [];
+      topNonSelected.forEach(t => {
+        t.style.visibility = 'hidden';
+        topClones.push(createCloneFromElement(t));
+      });
+
+      // Phase durations (ms)
+      const moveDuration = 700;   // move tiles to swapped positions
+      const growDuration = 450;  // grow to overshoot
+      const settleDuration = 300; // settle back to 1
+
+      // Force layout
+      void animOverlay.offsetHeight;
+
+      // Map selected clones -> topRects (target positions). Keep order as selected array -> top row order.
+      clones.forEach((item, idx) => {
+        const targetRect = topRects[idx] || selectedRects[idx] || item.rect;
+        animateCloneToRect(item.clone, targetRect, moveDuration);
+      });
+
+      // Map top non-selected clones -> the selectedRects of tiles that were NOT in top row.
+      // Build selected-only rects in the order of selectedTiles where they are not in topRow.
+      const selectedOnlyRects = [];
+      const selectedOnlyTiles = [];
+      selectedTiles.forEach((t, idx) => {
+        if (!topRowTiles.includes(t)) {
+          selectedOnlyRects.push(selectedRects[idx]);
+          selectedOnlyTiles.push(t);
+        }
+      });
+      topClones.forEach((item, idx) => {
+        const targetRect = selectedOnlyRects[idx] || selectedRects[idx] || item.rect;
+        animateCloneToRect(item.clone, targetRect, moveDuration);
+      });
+
+      // Wait for move to finish
+      await wait(moveDuration + 10);
+
+      // Remove the moving clones (they're visually in place)
+      clones.forEach(c => { if (c.clone.parentNode) c.clone.remove(); });
+      topClones.forEach(c => { if (c.clone.parentNode) c.clone.remove(); });
+
+      // Reconstruct words to match the animated positions
+      let newWords = new Array(words.length);
+      for (let i = 0; i < 4; i++) {
+        newWords[i] = selectedTiles[i].textContent;
+      }
+      const selectedOnlyIndices = selectedOnlyTiles.map(t => allTileEls.indexOf(t));
+      for (let j = 0; j < topNonSelected.length; j++) {
+        newWords[selectedOnlyIndices[j]] = topNonSelected[j].textContent;
+      }
+      for (let k = 0; k < words.length; k++) {
+        if (newWords[k] === undefined) {
+          newWords[k] = words[k];
+        }
+      }
+      words = newWords;
+      renderGrid();
+
+      // Compute bounding rect for the top row (destination of selected clones)
+      const currentTopRowTiles = Array.from(grid.querySelectorAll('.tile')).slice(0, 4);
+      const currentTopRects = currentTopRowTiles.map(t => t.getBoundingClientRect());
+      const mergedLeft = Math.min(...currentTopRects.map(r => r.left));
+      const mergedTop = Math.min(...currentTopRects.map(r => r.top));
+      const mergedRight = Math.max(...currentTopRects.map(r => r.left + r.width));
+      const mergedBottom = Math.max(...currentTopRects.map(r => r.top + r.height));
+      const mergedRect = { left: mergedLeft, top: mergedTop, width: mergedRight - mergedLeft, height: mergedBottom - mergedTop };
+
+      // --- Create the mergeClone as the FINAL long tile visual (no empty placeholder) ---
+      const mergeClone = document.createElement('div');
+      mergeClone.className = 'anim-clone merge-clone';
+      mergeClone.style.left = mergedRect.left + 'px';
+      mergeClone.style.top = mergedRect.top + 'px';
+      mergeClone.style.width = mergedRect.width + 'px';
+      mergeClone.style.height = mergedRect.height + 'px';
+      mergeClone.style.display = 'flex';
+      mergeClone.style.flexDirection = 'column';
+      mergeClone.style.justifyContent = 'center';
+      mergeClone.style.alignItems = 'center';
+      mergeClone.style.boxSizing = 'border-box';
+
+      // Apply scale adjustments
+      mergeClone.style.borderRadius = (8 * scale) + 'px';
+      mergeClone.style.padding = (5 * scale) + 'px';
+
+      // Build internal content (title + subtitle) so the letters are visible immediately
+      const mergeTitle = document.createElement('div');
+      mergeTitle.className = 'merge-title';
+      mergeTitle.style.fontSize = (14 * scale) + 'px';
+      mergeTitle.style.padding = '0';
+      mergeTitle.style.lineHeight = '1.1';
+      mergeTitle.textContent = foundCategory.name;
+
+      const mergeSub = document.createElement('div');
+      mergeSub.className = 'merge-sub';
+      mergeSub.style.fontSize = (14 * scale) + 'px';
+      mergeSub.style.paddingTop = '0';
+      mergeSub.style.opacity = '1';
+      mergeSub.textContent = foundCategory.words.join(", ");
+
+      mergeClone.appendChild(mergeTitle);
+      mergeClone.appendChild(mergeSub);
+
+      // Set background color to category color
+      const temp = document.createElement('div');
+      temp.className = foundCategory.color;
+      document.body.appendChild(temp);
+      mergeClone.style.background = window.getComputedStyle(temp).backgroundColor;
+      temp.remove();
+
+      // Start smaller for pop effect
+      mergeClone.style.opacity = '1';
+      mergeClone.style.transform = 'scale(0.9)';
+
+      animOverlay.appendChild(mergeClone);
+
+      // small pause to ensure CSS start state applied
+      await wait(10);
+
+      // Grow to overshoot with smooth easing
+      mergeClone.style.transition = `transform ${growDuration}ms cubic-bezier(.2, .8, .2, 1)`;
+      mergeClone.style.transform = 'scale(1.07)';
+      await wait(growDuration);
+
+      // Immediately settle back to 1 with ease
+      mergeClone.style.transition = `transform ${settleDuration}ms ease-in-out`;
+      mergeClone.style.transform = 'scale(1)';
+      await wait(settleDuration + 10);
+
+      // Remove overlay merge clone 
+      mergeClone.remove();
+
+      // Now replace the top 4 tiles with the long tile
+      const firstRemainingTile = Array.from(grid.querySelectorAll('.tile'))[4] || null;
+
+      // Create real long-tile element and push into fusedTiles
+      const longTile = document.createElement("div");
+      longTile.className = "long-tile " + foundCategory.color;
+      longTile.innerHTML = `<div class="title">${foundCategory.name}</div>
+                            <div class="subtitle">${foundCategory.words.join(", ")}</div>`;
+
+      // Set final styles before inserting to avoid transition
+      longTile.style.opacity = '1';
+      longTile.style.transform = 'translateY(0)';
+
+      fusedTiles.push(longTile);
+
+      // Remove the top row tiles first
+      currentTopRowTiles.forEach(t => t.remove());
+
+      // Insert the long tile where the top row was
+      grid.insertBefore(longTile, firstRemainingTile);
+
+      // Adjust font for the new long tile
+      adjustFont(longTile);
+
+      // Update words by removing the group words
+      words = words.filter(w => !wordsChosen.includes(w));
+
+      // finalize state
+      solvedGroups++;
+      if (solvedGroups === 4) {
+        document.getElementById("submitBtn").disabled = true;
+      }
+      deselectAll();
     }
 
+    // helper to animate a clone element to a rectangle
+    function animateCloneToRect(clone, targetRect, duration) {
+      clone.style.transition = `left ${duration}ms cubic-bezier(.2,.8,.2,1), top ${duration}ms cubic-bezier(.2,.8,.2,1), width ${duration}ms cubic-bezier(.2,.8,.2,1), height ${duration}ms cubic-bezier(.2,.8,.2,1), transform ${duration}ms cubic-bezier(.2,.8,.2,1)`;
+      requestAnimationFrame(() => {
+        clone.style.left = targetRect.left + 'px';
+        clone.style.top = targetRect.top + 'px';
+        clone.style.width = targetRect.width + 'px';
+        clone.style.height = targetRect.height + 'px';
+      });
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // initial grid render
     renderGrid();
+
   </script>
 </body>
 </html>
 <!-- include feature of one away --> 
 <!-- filling of buttons should invert colors -->
 <!-- mistakes + lifes should not shift-->
-<!-- Transition when correct category: 4 correct go to top row. top row tiles relocate to the other 4. top 4 merge into one tile that dilates and finally forms the row.-->
