@@ -12,6 +12,7 @@
       align-items: center;
       margin-top: 20px;
       padding: 70px;
+      position: relative; /* Positioning context for number overlay */
     }
     .topbar {
         width: 100%;
@@ -61,7 +62,6 @@
       min-width: 130px;
       z-index: 10;
       overflow: hidden;
-
     }
 
     .dropdown div {
@@ -106,9 +106,9 @@
       margin: 0;
       border: none;
       caret-color: transparent;
-      -webkit-appearance: none;  /* Disables iOS-specific styling */
-      -webkit-border-radius: 0;  /* Explicitly removes rounding on WebKit browsers */
-      border-radius: 0;          /* Fallback for other browsers */
+      -webkit-appearance: none;
+      -webkit-border-radius: 0;
+      border-radius: 0;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
@@ -128,10 +128,14 @@
 
     .number {
       position: absolute;
-      top: 2px;
-      left: 2px;
       font-size: 10px;
-      color: #000;
+      color: #000000;
+      background:transparent;
+      padding: 2px 4px;
+      border-radius: 2px;
+      z-index: 2000;
+      font-weight: bold;
+      line-height: normal;
     }
 
     .highlight {
@@ -213,81 +217,72 @@
         </div>
     </div>
 
-  <div class="grid" id="grid"></div>
+    <div id="number-overlay"></div> <!-- Moved outside grid -->
+    <div class="grid" id="grid"></div>
 
-  <div class="clue-box">
-    <button onclick="previousWord()">❮</button>
-    <div id="clue">Clue will appear here</div>
-    <button onclick="nextWord()">❯</button>
-  </div>
+    <div class="clue-box">
+      <button onclick="previousWord()">❮</button>
+      <div id="clue"></div>
+      <button onclick="nextWord()">❯</button>
+    </div>
 
-  <script>
-    // === SOLUTION GRID ===
-    const solution = [
-      ["#", "#", "V", "O", "I"],
-      ["#", "C", "A", "T", "S"],
-      ["#", "A", "L", "T", "O"],
-      ["B", "L", "U", "E", "#"],
-      ["T", "I", "E", "R", "#"],
-      ["C", "#", "#", "#", "#"]
-    ];
+    <script>
+      // === SOLUTION GRID ===
+      const solution = [
+        ["#", "#", "V", "O", "I"],
+        ["#", "C", "A", "T", "S"],
+        ["#", "A", "L", "T", "O"],
+        ["B", "L", "U", "E", "#"],
+        ["T", "I", "E", "R", "#"],
+        ["C", "#", "#", "#", "#"]
+      ];
 
-    // === WORDS ===
-    let words = [
-      // 1 Across
-      {number:1, dir:"across", cells:[[0,2],[0,3],[0,4]], clue:"Favourite Stockholm transportation."},
-      // 1 Down
-      {number:1, dir:"down", cells:[[0,2],[1,2],[2,2],[3,2],[4,2]], clue:"Worth of a shiny thing."},
-      // 2 Down
-      {number:2, dir:"down", cells:[[0,3],[1,3],[2,3],[3,3],[4,3]], clue:"Us when we sleep (singular)."},
-      // 3 Down
-      {number:3, dir:"down", cells:[[0,4],[1,4],[2,4]], clue:"Three-letter code for uniformity worldwide."},
-      // 4 Across
-      {number:4, dir:"across", cells:[[1,1],[1,2],[1,3],[1,4]], clue:"Our cartoon alter egos."},
-      // 4 Down
-      {number:4, dir:"down", cells:[[1,1],[2,1],[3,1],[4,1]], clue:"Potential destination in USA after a few Swedish winters."},
-      // 5 Across
-      {number:5, dir:"across", cells:[[2,1],[2,2],[2,3],[2,4]], clue:"Mexican stop."},
-      // 6 Across
-      {number:6, dir:"across", cells:[[3,0],[3,1],[3,2],[3,3]], clue:"Me (Rodri) in 4-across."},
-      // 6 Down
-      {number:6, dir:"down", cells:[[3,0],[4,0],[5,0]], clue:"Controversial currency abreviation."},
-      // 7 Across
-      {number:7, dir:"across", cells:[[4,0],[4,1],[4,2],[4,3]], clue:"Part of a wedding cake, one above another."}
-    ];
+      // === WORDS ===
+      let words = [
+        {number:1, dir:"across", cells:[[0,2],[0,3],[0,4]], clue:"Favourite Stockholm transportation."},
+        {number:1, dir:"down", cells:[[0,2],[1,2],[2,2],[3,2],[4,2]], clue:"Worth of a shiny thing."},
+        {number:2, dir:"down", cells:[[0,3],[1,3],[2,3],[3,3],[4,3]], clue:"Us when we sleep together (sing)."},
+        {number:3, dir:"down", cells:[[0,4],[1,4],[2,4]], clue:"Three-letter code for uniformity worldwide."},
+        {number:4, dir:"across", cells:[[1,1],[1,2],[1,3],[1,4]], clue:"Our cartoon alter egos."},
+        {number:4, dir:"down", cells:[[1,1],[2,1],[3,1],[4,1]], clue:"Potential destination in USA after a few Swedish winters."},
+        {number:5, dir:"across", cells:[[2,1],[2,2],[2,3],[2,4]], clue:"Mexican stop."},
+        {number:6, dir:"across", cells:[[3,0],[3,1],[3,2],[3,3]], clue:"Me (Rodri) in 4-across."},
+        {number:6, dir:"down", cells:[[3,0],[4,0],[5,0]], clue:"Controversial currency (abbr)."},
+        {number:7, dir:"across", cells:[[4,0],[4,1],[4,2],[4,3]], clue:"Part of a wedding cake, one above another."}
+      ];
 
-    // Sort by number, then across before down
-    words = words.sort((a, b) => a.number - b.number || (a.dir === "across" ? -1 : 1));
+      // Sort by number, then across before down
+      words = words.sort((a, b) => a.number - b.number || (a.dir === "across" ? -1 : 1));
 
-    const gridEl = document.getElementById("grid");
-    const clueEl = document.getElementById("clue");
-    const dropdown = document.getElementById("dropdown");
-    let selectedWordIndex = null;
-    let selectedCellIndex = null;
-    let currentR = -1;
-    let currentC = -1;
-    const cells = [];
+      const gridEl = document.getElementById("grid");
+      const clueEl = document.getElementById("clue");
+      const dropdown = document.getElementById("dropdown");
+      const numberOverlay = document.getElementById("number-overlay");
+      let selectedWordIndex = null;
+      let selectedCellIndex = null;
+      let currentR = -1;
+      let currentC = -1;
+      const cells = [];
 
-    function handleAfterInput(r, c) {
-      cells[r][c].classList.remove("error");
-      if (selectedWordIndex !== null) {
-        const word = words[selectedWordIndex];
-        const [cr, cc] = word.cells[selectedCellIndex];
-        if (cr === r && cc === c) {
-          if (selectedCellIndex < word.cells.length - 1) {
-            const nextIdx = selectedCellIndex + 1;
-            const [nr, nc] = word.cells[nextIdx];
-            selectWord(selectedWordIndex, nextIdx);
-          } else {
-            // Jump to the first letter of the next word after inputting the last letter
-            const nextWordIdx = (selectedWordIndex + 1) % words.length;
-            selectWord(nextWordIdx, 0);
+      function handleAfterInput(r, c) {
+        cells[r][c].classList.remove("error");
+        if (selectedWordIndex !== null) {
+          const word = words[selectedWordIndex];
+          const [cr, cc] = word.cells[selectedCellIndex];
+          if (cr === r && cc === c) {
+            if (selectedCellIndex < word.cells.length - 1) {
+              const nextIdx = selectedCellIndex + 1;
+              const [nr, nc] = word.cells[nextIdx];
+              selectWord(selectedWordIndex, nextIdx);
+            } else {
+              const nextWordIdx = (selectedWordIndex + 1) % words.length;
+              selectWord(nextWordIdx, 0);
+            }
           }
         }
       }
-    }
 
-    function createGrid() {
+      function createGrid() {
         for (let r = 0; r < 6; r++) {
           cells[r] = [];
           for (let c = 0; c < 5; c++) {
@@ -306,16 +301,13 @@
               cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
               cell.addEventListener("select", (e) => e.preventDefault());
               cell.addEventListener("copy", (e) => e.preventDefault());
-              cell.addEventListener("contextmenu", (e) => e.preventDefault()); // Block right-click menu
+              cell.addEventListener("contextmenu", (e) => e.preventDefault());
               cell.addEventListener("dragstart", (e) => e.preventDefault());
             }
             gridEl.appendChild(cell);
             cells[r][c] = cell;
       
-            // Set all borders to 1px #606060 (uniform internal color)
             cell.style.border = '1px solid #606060';
-      
-            // Override outer edges to 2px black
             if (c === 0) {
               cell.style.borderLeft = '2px solid black';
             }
@@ -330,159 +322,174 @@
             }
           }
         }
-        // Add numbers to first cells of words
+        // Add numbers to overlay
+        const gridRect = gridEl.getBoundingClientRect();
+        const bodyRect = document.body.getBoundingClientRect();
+        const offsetX = gridRect.left - bodyRect.left;
+        const offsetY = gridRect.top - bodyRect.top;
         words.forEach(w => {
           const [r, c] = w.cells[0];
-          const cell = cells[r][c];
-          if (solution[r][c] !== "#" && !cell.querySelector(".number")) {
+          if (solution[r][c] !== "#") {
             const num = document.createElement("div");
             num.classList.add("number");
             num.textContent = w.number;
-            cell.style.position = "relative";
-            cell.appendChild(num);
+            // Position relative to grid's top-left corner
+            num.style.left = `${offsetX + c * 60 + 2}px`;
+            num.style.top = `${offsetY + r * 60 + 2}px`;
+            numberOverlay.appendChild(num);
           }
         });
       }
 
-    function handleCellClick(r, c) {
-      const isCurrent = currentR === r && currentC === c && selectedWordIndex !== null;
-      if (isCurrent) {
-        const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
-        const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
-        if (acrossIdx !== -1 && downIdx !== -1) {
-          const targetIdx = selectedWordIndex === acrossIdx ? downIdx : acrossIdx;
-          const cellIdx = words[targetIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
-          selectWord(targetIdx, cellIdx);
-          return;
+      function handleCellClick(r, c) {
+        const isCurrent = currentR === r && currentC === c && selectedWordIndex !== null;
+        if (isCurrent) {
+          const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+          const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+          if (acrossIdx !== -1 && downIdx !== -1) {
+            const targetIdx = selectedWordIndex === acrossIdx ? downIdx : acrossIdx;
+            const cellIdx = words[targetIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
+            selectWord(targetIdx, cellIdx);
+            return;
+          }
         }
-      }
-      selectCellDefault(r, c);
-    }
-
-    function handleCellFocus(r, c) {
-      if (currentR !== r || currentC !== c) {
         selectCellDefault(r, c);
       }
-    }
 
-    function handleCellInput(e, r, c) {
-      const cell = cells[r][c];
-      if (cell.classList.contains("correct")) {
-        cell.value = solution[r][c];
-        return;
-      }
-
-      let val = e.data ? e.data.toUpperCase() : e.target.value.toUpperCase();
-
-      // Replace old letter with new one
-      e.target.value = val.slice(-1);
-
-      if (e.target.value.length === 1) {
-        handleAfterInput(r, c);
-      } else {
-        e.target.classList.remove("error");
-      }
-    }
-
-    function handleCellKeyDown(e, r, c) {
-      const cell = cells[r][c];
-      if (cell.classList.contains("correct")) {
-        return;
-      }
-
-      if (e.key === "Backspace") {
-        if (cell.value !== "") {
-          // just clear current cell
-          cell.value = "";
-          e.preventDefault();
-        } else if (selectedWordIndex !== null && selectedCellIndex > 0) {
-          // move to previous cell if empty
-          const prevIdx = selectedCellIndex - 1;
-          const [pr, pc] = words[selectedWordIndex].cells[prevIdx];
-          selectWord(selectedWordIndex, prevIdx);
-          cells[pr][pc].value = "";
-          e.preventDefault();
+      function handleCellFocus(r, c) {
+        if (currentR !== r || currentC !== c) {
+          selectCellDefault(r, c);
         }
-      } else if (/^[a-zA-Z]$/.test(e.key)) {
-        // Handle typing a letter: replace the current cell's value
-        const newVal = e.key.toUpperCase();
-        cell.value = newVal;
-        e.preventDefault(); // Prevent default insertion to ensure clean replacement
-        handleAfterInput(r, c);
       }
-    }
 
-    function selectCellDefault(r, c) {
-      const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
-      const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
-      let chosenIdx = -1;
-      if (acrossIdx !== -1) {
-        chosenIdx = acrossIdx;
-      } else if (downIdx !== -1) {
-        chosenIdx = downIdx;
-      }
-      if (chosenIdx === -1) return;
-      const cellIdx = words[chosenIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
-      selectWord(chosenIdx, cellIdx);
-    }
-
-    function selectWord(wordIndex, cellIndex = 0) {
-      clearHighlights();
-      selectedWordIndex = wordIndex;
-      selectedCellIndex = cellIndex;
-      const wordCells = words[wordIndex].cells;
-      wordCells.forEach(([rr, cc]) => {
-        const cell = cells[rr][cc];
-        if (solution[rr][cc] !== "#") {
-          cell.classList.add("highlight");
+      function handleCellInput(e, r, c) {
+        const cell = cells[r][c];
+        if (cell.classList.contains("correct")) {
+          cell.value = solution[r][c];
+          return;
         }
-      });
-      const [sr, sc] = wordCells[cellIndex];
-      currentR = sr;
-      currentC = sc;
-      const selCell = cells[sr][sc];
-      selCell.classList.add("selected");
-      if (selCell.tagName === "INPUT") {
-        selCell.focus();
-      }
-      const dirLabel = words[wordIndex].dir === 'across' ? 'Across' : 'Down';
-      clueEl.textContent = `${words[wordIndex].number} ${dirLabel}: ${words[wordIndex].clue}`;
-    }
 
-    function clearHighlights() {
-      for (let rr = 0; rr < 6; rr++) {
-        for (let cc = 0; cc < 5; cc++) {
+        let val = e.data ? e.data.toUpperCase() : e.target.value.toUpperCase();
+        e.target.value = val.slice(-1);
+
+        if (e.target.value.length === 1) {
+          handleAfterInput(r, c);
+        } else {
+          e.target.classList.remove("error");
+        }
+      }
+
+      function handleCellKeyDown(e, r, c) {
+        const cell = cells[r][c];
+        if (cell.classList.contains("correct")) {
+          return;
+        }
+
+        if (e.key === "Backspace") {
+          if (cell.value !== "") {
+            cell.value = "";
+            e.preventDefault();
+          } else if (selectedWordIndex !== null && selectedCellIndex > 0) {
+            const prevIdx = selectedCellIndex - 1;
+            const [pr, pc] = words[selectedWordIndex].cells[prevIdx];
+            selectWord(selectedWordIndex, prevIdx);
+            cells[pr][pc].value = "";
+            e.preventDefault();
+          }
+        } else if (/^[a-zA-Z]$/.test(e.key)) {
+          const newVal = e.key.toUpperCase();
+          cell.value = newVal;
+          e.preventDefault();
+          handleAfterInput(r, c);
+        }
+      }
+
+      function selectCellDefault(r, c) {
+        const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+        const downIdx = words.findIndex(w => w.dir === "down" && w.cells.some(([wr, wc]) => wr === r && wc === c));
+        let chosenIdx = -1;
+        if (acrossIdx !== -1) {
+          chosenIdx = acrossIdx;
+        } else if (downIdx !== -1) {
+          chosenIdx = downIdx;
+        }
+        if (chosenIdx === -1) return;
+        const cellIdx = words[chosenIdx].cells.findIndex(([wr, wc]) => wr === r && wc === c);
+        selectWord(chosenIdx, cellIdx);
+      }
+
+      function selectWord(wordIndex, cellIndex = 0) {
+        clearHighlights();
+        selectedWordIndex = wordIndex;
+        selectedCellIndex = cellIndex;
+        const wordCells = words[wordIndex].cells;
+        wordCells.forEach(([rr, cc]) => {
+          const cell = cells[rr][cc];
           if (solution[rr][cc] !== "#") {
-            cells[rr][cc].classList.remove("highlight", "selected");
+            cell.classList.add("highlight");
+          }
+        });
+        const [sr, sc] = wordCells[cellIndex];
+        currentR = sr;
+        currentC = sc;
+        const selCell = cells[sr][sc];
+        selCell.classList.add("selected");
+        if (selCell.tagName === "INPUT") {
+          selCell.focus();
+        }
+        const dirLabel = words[wordIndex].dir === 'across' ? 'Across' : 'Down';
+        clueEl.textContent = `${words[wordIndex].clue}`;
+      }
+
+      function clearHighlights() {
+        for (let rr = 0; rr < 6; rr++) {
+          for (let cc = 0; cc < 5; cc++) {
+            if (solution[rr][cc] !== "#") {
+              cells[rr][cc].classList.remove("highlight", "selected");
+            }
           }
         }
       }
-    }
 
-    function nextWord() {
-      if (selectedWordIndex === null) {
-        selectWord(0, 0);
-      } else {
-        const nextIdx = (selectedWordIndex + 1) % words.length;
-        selectWord(nextIdx, 0);
+      function nextWord() {
+        if (selectedWordIndex === null) {
+          selectWord(0, 0);
+        } else {
+          const nextIdx = (selectedWordIndex + 1) % words.length;
+          selectWord(nextIdx, 0);
+        }
       }
-    }
 
-    function previousWord() {
-      if (selectedWordIndex === null) {
-        const prevIdx = words.length - 1;
-        selectWord(prevIdx, 0);
-      } else {
-        const prevIdx = (selectedWordIndex - 1 + words.length) % words.length;
-        selectWord(prevIdx, 0);
+      function previousWord() {
+        if (selectedWordIndex === null) {
+          const prevIdx = words.length - 1;
+          selectWord(prevIdx, 0);
+        } else {
+          const prevIdx = (selectedWordIndex - 1 + words.length) % words.length;
+          selectWord(prevIdx, 0);
+        }
       }
-    }
 
-    // === CHECKING FUNCTIONS ===
-    function checkPuzzle() {
-      for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 5; c++) {
-          if (solution[r][c] === "#") continue;
+      function checkPuzzle() {
+        for (let r = 0; r < 6; r++) {
+          for (let c = 0; c < 5; c++) {
+            if (solution[r][c] === "#") continue;
+            const cell = cells[r][c];
+            cell.classList.remove("correct", "error");
+            const val = cell.value;
+            if (val === solution[r][c]) {
+              cell.classList.add("correct");
+            } else if (val !== "") {
+              cell.classList.add("error");
+            }
+          }
+        }
+      }
+
+      function checkWord() {
+        if (selectedWordIndex === null) return;
+        const wcells = words[selectedWordIndex].cells;
+        wcells.forEach(([r, c]) => {
           const cell = cells[r][c];
           cell.classList.remove("correct", "error");
           const val = cell.value;
@@ -491,14 +498,12 @@
           } else if (val !== "") {
             cell.classList.add("error");
           }
-        }
+        });
       }
-    }
 
-    function checkWord() {
-      if (selectedWordIndex === null) return;
-      const wcells = words[selectedWordIndex].cells;
-      wcells.forEach(([r, c]) => {
+      function checkLetter() {
+        if (selectedWordIndex === null || selectedCellIndex === null) return;
+        const [r, c] = words[selectedWordIndex].cells[selectedCellIndex];
         const cell = cells[r][c];
         cell.classList.remove("correct", "error");
         const val = cell.value;
@@ -507,28 +512,13 @@
         } else if (val !== "") {
           cell.classList.add("error");
         }
-      });
-    }
-
-    function checkLetter() {
-      if (selectedWordIndex === null || selectedCellIndex === null) return;
-      const [r, c] = words[selectedWordIndex].cells[selectedCellIndex];
-      const cell = cells[r][c];
-      cell.classList.remove("correct", "error");
-      const val = cell.value;
-      if (val === solution[r][c]) {
-        cell.classList.add("correct");
-      } else if (val !== "") {
-        cell.classList.add("error");
       }
-    }
 
-    // === SETTINGS GEAR ===
-    document.querySelector(".gear").addEventListener("click", () => {
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    });
+      document.querySelector(".gear").addEventListener("click", () => {
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      });
 
-    createGrid();
-  </script>
+      createGrid();
+    </script>
 </body>
 </html>
