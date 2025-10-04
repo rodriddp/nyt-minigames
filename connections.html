@@ -67,7 +67,7 @@
   @keyframes shake { 0%{transform:translateX(0)}10%{transform:translateX(-5px)}20%{transform:translateX(5px)}30%{transform:translateX(-5px)}40%{transform:translateX(5px)}50%{transform:translateX(-5px)}60%{transform:translateX(5px)}70%{transform:translateX(-5px)}80%{transform:translateX(5px)}90%{transform:translateX(-5px)}100%{transform:translateX(0)} }
   .tile.shake { animation: shake 1s; }
 
-  .lives-container { display:flex; align-items:center; margin:20px 0; gap:10px; }
+  .lives-container { display:flex; align-items:center; margin:20px 0; gap:10px; justify-content:center; width:100%; }
   .lives-label { font-weight:400; font-size:15px; color:#515043; }
   .lives { display:flex; gap:8px; }
   .life { width:12px; height:12px; border-radius:50%; border:2px solid #59594E; background:#59594E; }
@@ -76,12 +76,32 @@
 
   .actions { display:flex; gap:15px; margin-top:10px; justify-content:center; width:100%; }
   .btn {
-    padding: 10px 20px; border:1px solid #333; border-radius:25px; background:white; cursor:pointer; font-weight:bold; color:black;
-    transition: background 0.2s, transform 0.2s; -webkit-appearance:none; appearance:none; -webkit-tap-highlight-color: transparent;
+    padding: 10px 20px; 
+    border: 1px solid #333; 
+    border-radius: 25px; 
+    background: white; 
+    cursor: pointer; 
+    font-weight: bold; 
+    color: black;
+    transition: filter 0.2s; /* Smooth transition for filter */
+    -webkit-appearance: none; 
+    appearance: none; 
+    -webkit-tap-highlight-color: transparent;
   }
-  .btn:hover { background:#e9ecef; transform:scale(1.05); }
-  .btn:disabled { background:#f0f0f0; color:#999; border-color:#ccc; cursor:not-allowed; }
-
+  
+  .btn:hover:active {
+    filter: invert(100%); /* Only invert when hovering AND clicking */
+  }
+  
+  .btn:not(:hover):not(:active) {
+    filter: none; /* Explicitly reset when not hovering or clicking */
+  }
+  
+  /* Optional: Handle focus state to avoid inversion on click focus */
+  .btn:focus {
+    filter: none; /* Ensure focus doesn't trigger inversion */
+    outline: none; /* Remove default focus outline (optional, can style differently) */
+  }
   .long-tile {
     display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;
     border-radius:8px; color:black; font-size:14px; font-weight:bold; grid-column:span 4; padding:5px;
@@ -315,9 +335,9 @@
       });
 
       // Phase durations (ms)
-      const moveDuration = 700;   // move tiles to swapped positions
-      const growDuration = 450;  // grow to overshoot
-      const settleDuration = 300; // settle back to 1
+      const moveDuration = 500;   // move tiles to swapped positions
+      const growDuration = 300;  // grow to overshoot
+      const settleDuration = 150; // settle back to 1
 
       // Force layout
       void animOverlay.offsetHeight;
@@ -429,7 +449,7 @@
 
       // Grow to overshoot with smooth easing
       mergeClone.style.transition = `transform ${growDuration}ms cubic-bezier(.2, .8, .2, 1)`;
-      mergeClone.style.transform = 'scale(1.07)';
+      mergeClone.style.transform = 'scale(1.1)';
       await wait(growDuration);
 
       // Immediately settle back to 1 with ease
@@ -496,6 +516,6 @@
   </script>
 </body>
 </html>
+
 <!-- include feature of one away --> 
-<!-- filling of buttons should invert colors -->
 <!-- mistakes + lifes should not shift-->
