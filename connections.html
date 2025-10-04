@@ -130,6 +130,24 @@
   /* helper: text inside merge clone */
   .merge-title { font-weight:700; font-size:14px; line-height:1.1; text-align:center; padding:2px 8px; }
   .merge-sub { font-weight:400; font-size:14px; text-align:center; opacity:1; padding-top:0px; }
+  .one-away-message {
+    position: absolute;
+    background: black;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1500;
+  }
+  .one-away-message.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
 </style>
 </head>
@@ -282,6 +300,27 @@
       return tileEls.slice(0, 4);
     }
 
+    async function showOneAwayMessage() {
+      const messageBox = document.createElement("div");
+      messageBox.className = "one-away-message";
+      messageBox.textContent = "One away...";
+      pageWrapper.appendChild(messageBox);
+
+      const gridRect = grid.getBoundingClientRect();
+      const messageHeight = messageBox.offsetHeight;
+      messageBox.style.left = `${gridRect.left + 20 +(gridRect.width - messageBox.offsetWidth) / 2}px`;
+      messageBox.style.top = `${gridRect.top - 80}px`;
+
+      requestAnimationFrame(() => {
+        messageBox.classList.add("show");
+      });
+
+      await wait(2000);
+      messageBox.classList.remove("show");
+      await wait(300);
+      messageBox.remove();
+    }
+
     // main submit flow with animation for correct group
     async function submitSelection() {
       if (selected.length !== 4) return;
@@ -292,6 +331,10 @@
       );
 
       if (!foundCategory) {
+        const isOneAway = categories.some(cat => {
+          const matches = wordsChosen.filter(w => cat.words.includes(w)).length;
+          return matches === 3;
+        });
         // incorrect
         mistakes--;
         loseLife();
@@ -303,6 +346,10 @@
           document.getElementById("submitBtn").disabled = true;
         }
         deselectAll();
+
+        if (isOneAway) {
+          await showOneAwayMessage();
+        }
         return;
       }
 
@@ -335,9 +382,9 @@
       });
 
       // Phase durations (ms)
-      const moveDuration = 500;   // move tiles to swapped positions
-      const growDuration = 300;  // grow to overshoot
-      const settleDuration = 150; // settle back to 1
+      const moveDuration = 700;   // move tiles to swapped positions
+      const growDuration = 450;  // grow to overshoot
+      const settleDuration = 300; // settle back to 1
 
       // Force layout
       void animOverlay.offsetHeight;
