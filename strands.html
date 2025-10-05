@@ -164,6 +164,19 @@
     <a href="index.html">
       <img src="icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
+    <button id="newGameBtn" style="
+      padding: 10px 20px; 
+      border: 1px solid #333; 
+      border-radius: 25px; 
+      background: white; 
+      cursor: pointer; 
+      font-weight: bold; 
+      color: black;
+      transition: filter 0.2s;
+      margin-left: auto;
+      -webkit-tap-highlight-color: transparent;
+      margin-right: 60px;
+    ">New Game</button>
   </div>
   <div class="game-wrapper">
     <div class="game">
@@ -269,6 +282,63 @@ let startR, startC;
 let currentHintWord = null;
 let usedWords = new Set();
 
+// --- MEMORY FUNCTIONS ---
+function saveState() {
+  const state = {
+    found: Array.from(found),
+    usedWords: Array.from(usedWords),
+    mistakeCount,
+    spentHints,
+    currentHintWord // add this line
+  };
+  localStorage.setItem('strandsGameState', JSON.stringify(state));
+}
+
+
+function loadState() {
+  const stateJSON = localStorage.getItem('strandsGameState');
+  if (!stateJSON) return;
+  try {
+    const state = JSON.parse(stateJSON);
+    found = new Set(state.found || []);
+    usedWords = new Set(state.usedWords || []);
+    mistakeCount = state.mistakeCount || 0;
+    spentHints = state.spentHints || 0;
+
+    // Restore UI for found words
+    found.forEach(word => {
+      const path = wordToPath[word];
+      if (path) {
+        const className = word === spangram ? 'found-yellow' : 'found-blue';
+        path.forEach(([r, c]) => getCell(r, c).classList.add(className));
+        for (let i = 1; i < path.length; i++) {
+          const [r1, c1] = path[i-1];
+          const [r2, c2] = path[i];
+          const color = className === 'found-blue' ? "#B8DEEC" : "#F1D046";
+          permanentEdges.push([r1, c1, r2, c2, color]);
+        }
+      }
+    });
+
+    // Restore current hint highlight
+    if (state.currentHintWord) {
+      currentHintWord = state.currentHintWord;
+      const path = wordToPath[currentHintWord];
+      if (path) {
+        path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
+      }
+    }
+
+    foundCountDiv.textContent = `${found.size} of ${themeWords.length + 1} theme words found.`;
+    updateHintButton();
+    drawEdges();
+  } catch(e) {
+    console.error("Failed to load game state", e);
+  }
+  
+}
+
+
 async function loadDictionary() {
   try {
     const res = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
@@ -312,10 +382,12 @@ function handleHint() {
   if (hintsAvailable <= 0) return;
   spentHints += 1;
   updateHintButton();
+  saveState();
   if (currentHintWord) return;
   const unsolved = themeWords.filter(w => !found.has(w));
   if (unsolved.length === 0) return;
   currentHintWord = unsolved[Math.floor(Math.random() * unsolved.length)];
+  saveState();
   const path = wordToPath[currentHintWord];
   path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
 }
@@ -368,6 +440,7 @@ function submit() {
     return;
   }
   usedWords.add(lower);
+
   if (allSolutions.includes(word)) {
     console.log(`Found solution word: ${word}`);
     const isSpangram = word === spangram;
@@ -404,6 +477,7 @@ function submit() {
     showMessage("Not a theme word...");
     clearPath();
   }
+  saveState();
 }
 
 function handleMouseDown(r, c) {
@@ -550,6 +624,8 @@ gridLetters.forEach((rowLetters, r) => {
   });
   grid.appendChild(row);
 });
+// --- LOAD SAVED STATE ---
+loadState();
 
 window.addEventListener('resize', () => {
   edgesSvg.setAttribute("width", grid.offsetWidth);
@@ -571,6 +647,11 @@ window.addEventListener('mouseup', () => {
 document.addEventListener('touchcancel', handleDocumentTouchEnd, { passive: false });
 
 updateHintButton();
+const newGameBtn = document.getElementById('newGameBtn');
+newGameBtn.addEventListener('click', () => {
+  localStorage.removeItem('strandsGameState'); // clear saved state
+  location.reload(); // reload page fresh
+});
 </script>
 </body>
 </html>
