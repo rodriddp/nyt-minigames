@@ -25,7 +25,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        z-index: 1000;
+        z-index: 3000;
       }
       
       .topbar-icon {
@@ -52,15 +52,15 @@
 
     .dropdown {
       display: none;
-      position: absolute;
-      right: 0;
-      top: calc(100% + 4px);
+      position: absolute;      /* or fixed if you want it to stay when scrolling */
+      top: 50px;               /* below the topbar */
+      right: 12px;             /* align with topbar */
       background: white;
       border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.05);
       min-width: 130px;
-      z-index: 10;
+      z-index: 2000;           /* above numbers overlay */
       overflow: hidden;
     }
 
@@ -133,7 +133,7 @@
       background:transparent;
       padding: 2px 4px;
       border-radius: 2px;
-      z-index: 2000;
+      z-index: 1000;
       font-weight: bold;
       line-height: normal;
     }
@@ -209,11 +209,13 @@
           <div class="gear">
             <img src="icons/gear.png" alt="Settings">
           </div>
-          <div class="dropdown" id="dropdown">
-            <div onclick="checkPuzzle()">Check Puzzle</div>
-            <div onclick="checkWord()">Check Word</div>
-            <div onclick="checkLetter()">Check Letter</div>
-          </div>
+        </div>
+        
+        <div class="dropdown" id="dropdown">
+          <div onclick="checkPuzzle()">Check Puzzle</div>
+          <div onclick="checkWord()">Check Word</div>
+          <div onclick="checkLetter()">Check Letter</div>
+          <div onclick="newGame()">New Game</div>
         </div>
     </div>
 
@@ -377,32 +379,52 @@
         } else {
           e.target.classList.remove("error");
         }
+        saveProgress();
       }
 
       function handleCellKeyDown(e, r, c) {
         const cell = cells[r][c];
-        if (cell.classList.contains("correct")) {
-          return;
-        }
-
+      
         if (e.key === "Backspace") {
+          if (cell.dataset.locked === "true" || cell.readOnly) {
+            // Only remove the error if present
+            if (cell.classList.contains("error")) {
+              cell.classList.remove("error");
+            }
+            e.preventDefault(); // don't remove value
+            return;
+          }
+      
           if (cell.value !== "") {
             cell.value = "";
+            cell.classList.remove("error"); // remove error on backspace
             e.preventDefault();
           } else if (selectedWordIndex !== null && selectedCellIndex > 0) {
             const prevIdx = selectedCellIndex - 1;
             const [pr, pc] = words[selectedWordIndex].cells[prevIdx];
-            selectWord(selectedWordIndex, prevIdx);
-            cells[pr][pc].value = "";
-            e.preventDefault();
+            const prevCell = cells[pr][pc];
+            if (prevCell.dataset.locked === "true" || prevCell.readOnly) {
+              e.preventDefault(); // do not delete locked letters
+            } else {
+              selectWord(selectedWordIndex, prevIdx);
+              prevCell.value = "";
+              prevCell.classList.remove("error"); // remove error if any
+              e.preventDefault();
+            }
           }
         } else if (/^[a-zA-Z]$/.test(e.key)) {
+          if (cell.dataset.locked === "true" || cell.readOnly) {
+            e.preventDefault(); // can't type over locked letter
+            return;
+          }
           const newVal = e.key.toUpperCase();
           cell.value = newVal;
           e.preventDefault();
           handleAfterInput(r, c);
         }
       }
+      
+      
 
       function selectCellDefault(r, c) {
         const acrossIdx = words.findIndex(w => w.dir === "across" && w.cells.some(([wr, wc]) => wr === r && wc === c));
@@ -479,11 +501,15 @@
             const val = cell.value;
             if (val === solution[r][c]) {
               cell.classList.add("correct");
+              cell.readOnly = true;          // Prevent the user from editing correct letters
+              cell.dataset.locked = "true";  // Store a flag so we can restore later
+              saveProgress();       
             } else if (val !== "") {
               cell.classList.add("error");
             }
           }
         }
+        dropdown.style.display = "none";
       }
 
       function checkWord() {
@@ -495,10 +521,15 @@
           const val = cell.value;
           if (val === solution[r][c]) {
             cell.classList.add("correct");
+            cell.classList.add("correct");
+            cell.readOnly = true;          // Prevent the user from editing correct letters
+            cell.dataset.locked = "true";  // Store a flag so we can restore later
+              saveProgress();
           } else if (val !== "") {
             cell.classList.add("error");
           }
         });
+        dropdown.style.display = "none";
       }
 
       function checkLetter() {
@@ -509,16 +540,82 @@
         const val = cell.value;
         if (val === solution[r][c]) {
           cell.classList.add("correct");
+          cell.classList.add("correct");
+          cell.readOnly = true;          // Prevent the user from editing correct letters
+          cell.dataset.locked = "true";  // Store a flag so we can restore later
+          saveProgress();
         } else if (val !== "") {
           cell.classList.add("error");
         }
+        dropdown.style.display = "none";
       }
 
       document.querySelector(".gear").addEventListener("click", () => {
         dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
       });
+      
+    // === SAVE / LOAD / CLEAR PROGRESS ===
+    function saveProgress() {
+      const progress = cells.map(row =>
+        row.map(cell => {
+          if (cell.tagName === "INPUT") {
+            return {
+              value: cell.value,
+              locked: cell.dataset.locked === "true",
+              error: cell.classList.contains("error")
+            };
+          }
+          return null;
+        })
+      );
+      localStorage.setItem("crosswordProgress", JSON.stringify(progress));
+    }
+      
 
-      createGrid();
+    function loadProgress() {
+      const saved = JSON.parse(localStorage.getItem("crosswordProgress") || "[]");
+      for (let r = 0; r < saved.length; r++) {
+        for (let c = 0; c < saved[r].length; c++) {
+          const data = saved[r][c];
+          const cell = cells[r]?.[c];
+          if (cell && cell.tagName === "INPUT" && data) {
+            cell.value = data.value || "";
+            if (data.locked) {
+              cell.classList.add("correct");
+              cell.readOnly = true;
+              cell.dataset.locked = "true";
+            }
+            if (data.error) {
+              cell.classList.add("error");
+            }
+          }
+        }
+      }
+    }
+      
+    
+    function clearProgress() {
+      localStorage.removeItem("crosswordProgress");
+      for (let r = 0; r < cells.length; r++) {
+        for (let c = 0; c < cells[r].length; c++) {
+          const cell = cells[r][c];
+          if (cell.tagName === "INPUT") {
+            cell.value = "";
+            cell.classList.remove("correct", "error");
+            cell.readOnly = false;
+            delete cell.dataset.locked;
+          }
+        }
+      }
+    }
+    function newGame() {
+      dropdown.style.display = "none"; // Close dropdown
+      clearProgress(); // Clear localStorage and reset UI
+    }
+
+    createGrid();
+    loadProgress();
+    window.addEventListener("beforeunload", saveProgress);
     </script>
 </body>
 </html>
