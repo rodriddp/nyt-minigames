@@ -47,8 +47,8 @@ hintButton.addEventListener('click', handleHint);
 /* ---------- Tunable thresholds (feel free to tweak) ---------- */
 const START_DEADZONE_RATIO = 0.35;   // must leave ~22% of a cell radius before considering a move
 const COMMIT_RATIO_ORTH     = 0.50;  // must move ~46% toward orth neighbor center to commit
-const COMMIT_RATIO_DIAG     = 0.50;  // must move ~48% toward diagonal neighbor center to commit
-const LATERAL_TOL_RATIO     = 0.42;  // corridor half-width (~42% of a cell) around the move direction
+const COMMIT_RATIO_DIAG     = 0.55;  // must move ~48% toward diagonal neighbor center to commit
+const LATERAL_TOL_RATIO     = 0.35;  // corridor half-width (~42% of a cell) around the move direction
 
 /* ---------- Metrics & mapping helpers ---------- */
 function getGridMetrics() {
