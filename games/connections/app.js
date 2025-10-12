@@ -1,11 +1,11 @@
-const categories = [
+const CATEGORIES = [
   { name: "THEY FORM A NICKNAME WHEN COMBINED WITH SARA", color: "group-yellow", words: ["BACÍN", "JEVO", "WARMA", "VILLOSO"] },
   { name: "DATES THAT WE WHERE ON (WHEN WE WERE NOT DATING)", color: "group-green", words: ["SUSHI", "TAYLOR", "ROOFTOP", "ICE SKATING"] },
   { name: "NORWAY ROADTRIP STARTER PACK", color: "group-blue", words: ["XC60", "WIPES", "MARSHMALLOWS", "MINK"] },
   { name: "RHYMES WITH GOTHENBURG FRIENDS", color: "group-purple", words: ["CHÂTEAU", "KOREAN", "DILEMMA", "CHIA"] }
 ];
 
-let words = categories.flatMap(c => c.words).sort(() => Math.random() - 0.5);
+let words = CATEGORIES.flatMap(c => c.words).sort(() => Math.random() - 0.5);
 const grid = document.getElementById("grid");
 const livesContainer = document.getElementById("lives");
 const animOverlay = document.getElementById("animOverlay");
@@ -339,7 +339,7 @@ async function revealGroup(category) {
 
 async function revealAllGroups() {
   document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-  const unsolved = categories.filter(cat => !fusedTiles.some(tile => tile.querySelector('.title').textContent === cat.name));
+  const unsolved = CATEGORIES.filter(cat => !fusedTiles.some(tile => tile.querySelector('.title').textContent === cat.name));
   for (const category of unsolved) {
     await revealGroup(category);
     await wait(500);
@@ -350,12 +350,12 @@ async function submitSelection() {
   if (selected.length !== 4) return;
 
   const wordsChosen = selected.map(t => t.textContent);
-  const foundCategory = categories.find(cat =>
+  const foundCategory = CATEGORIES.find(cat =>
     cat.words.every(w => wordsChosen.includes(w))
   );
 
   if (!foundCategory) {
-    const isOneAway = categories.some(cat => {
+    const isOneAway = CATEGORIES.some(cat => {
       const matches = wordsChosen.filter(w => cat.words.includes(w)).length;
       return matches === 3;
     });
