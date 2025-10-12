@@ -3,28 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=0.9" />
-  <title>Mini Wordle</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Mini Wordle - HTML/JS</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="topbar">
-    <a href="../../index.html" class="back-link" aria-label="Back to game hub">
-      <img src="../../icons/nyt_logo.png" alt="" class="topbar-icon">
+    <a href="../../index.html" aria-label="Back to home">
+      <img src="../../icons/nyt_logo.png" alt="Back" class="topbar-icon">
     </a>
-    <button id="newGameBtn" class="btn">New Game</button>
+    <button id="newGameBtn" class="new-game-btn">New Game</button>
   </div>
 
   <div class="container">
-    <div class="status" id="status" aria-live="polite" role="status"></div>
-
+    <div class="status" id="status"></div>
     <div class="board" id="board" aria-label="Wordle board"></div>
-
-    <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
-
-    <small class="hint">Type on your keyboard or tap the keys. Press Enter to submit.</small>
+    <div class="keyboard" id="keyboard" aria-label="Keyboard"></div>
+    <small class="small-note">Type with your keyboard or click the keys. Press Enter to submit.</small>
   </div>
 
-  <!-- Use modules; open via a local server (http://localhost:...) -->
-  <script src="app.js"></script>
+  <script defer src="app.js"></script>
 </body>
 </html>
