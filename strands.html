@@ -554,7 +554,8 @@ function handleMouseUp(r, c) {
 }
 
 function getCell(r, c) {
-  return grid.children[r + 1].children[c];
+  const rows = grid.querySelectorAll('.row');
+  return rows[r].children[c];
 }
 
 function drawEdges() {

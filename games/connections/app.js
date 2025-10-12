@@ -173,7 +173,7 @@ async function showOneAwayMessage() {
   pageWrapper.appendChild(messageBox);
 
   const gridRect = grid.getBoundingClientRect();
-  messageBox.style.left = `${gridRect.left + 20 + (gridRect.width - messageBox.offsetWidth) / 2}px`;
+  messageBox.style.left = `${gridRect.left + (gridRect.width - messageBox.offsetWidth) / 2}px`;
   messageBox.style.top = `${gridRect.top - 80}px`;
 
   requestAnimationFrame(() => { messageBox.classList.add("show"); });
