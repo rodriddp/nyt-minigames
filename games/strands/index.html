@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=0.9" />
+<title>Strands - HTML/JS</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a href="../../index.html">
+      <img src="../../icons/nyt_logo.png" alt="Back" class="topbar-icon">
+    </a>
+    <button id="newGameBtn" style="
+      padding: 10px 20px; 
+      border: 1px solid #333; 
+      border-radius: 25px; 
+      background: white; 
+      cursor: pointer; 
+      font-weight: bold; 
+      color: black;
+      transition: filter 0.2s;
+      margin-left: auto;
+      -webkit-tap-highlight-color: transparent;
+      margin-right: 60px;
+    ">New Game</button>
+  </div>
+  <div class="game-wrapper">
+    <div class="game">
+      <div class="theme">
+          <div class="theme-top">TODAY'S THEME</div>
+          <div class="theme-bottom">Planning ahead</div>
+      </div>
+      <div class="current-word"></div>
+      <div class="grid">
+          <svg class="edges"></svg>
+      </div>
+      <div class="controls">
+        <button class="hint-button">Hint</button>
+        <div class="found-count">0 of 7 theme words found.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keep as a plain script tag -->
+  <script src="app.js"></script>
+</body>
+</html>

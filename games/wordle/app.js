@@ -1,4 +1,10 @@
-import { SOLUTION, MAX_ROWS, WORD_LENGTH, WORDLIST_URL } from './config.js';
+const SOLUTION = "party";      // keep your current solution
+const MAX_ROWS = 6;
+const WORD_LENGTH = 5;
+
+// Remote word list (optional; validation disabled if it fails to load)
+const WORDLIST_URL =
+  "https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/valid-wordle-words.txt";
 
 let board = Array.from({length: MAX_ROWS},()=>Array(WORD_LENGTH).fill(''));
 let currentRow = 0;
