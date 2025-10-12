@@ -61,13 +61,19 @@ function createKeyboard(){
 }
 
 function refreshBoard() {
-  for (let r=0;r<MAX_ROWS;r++){
-    for (let c=0;c<WORD_LENGTH;c++){
+  for (let r = 0; r < MAX_ROWS; r++) {
+    for (let c = 0; c < WORD_LENGTH; c++) {
       const tile = boardEl.querySelector(`.tile[data-row="${r}"][data-col="${c}"]`);
-      const ch = board[r][c]||'';
+      const ch = board[r][c] || '';
+
       tile.textContent = ch.toUpperCase();
-      if(ch) tile.classList.add('filled'); else tile.classList.remove('filled');
-      if(r>=currentRow) tile.classList.remove('green','yellow','gray');
+      if (ch) tile.classList.add('filled'); else tile.classList.remove('filled');
+
+      // Only clear colors on rows strictly BELOW the last judged row,
+      // and never clear if the game is already over.
+      if (!gameOver && r > currentRow) {
+        tile.classList.remove('green', 'yellow', 'gray');
+      }
     }
   }
 }
@@ -141,6 +147,7 @@ function evaluateGuess(guess){
     setTimeout(()=>{
       setStatus("Fabulous!", true, true);
       gameOver=true;
+      saveGameStateWordle();
     }, lastTileDelay);
   } else {
     currentRow++; currentCol=0;
