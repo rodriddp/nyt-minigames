@@ -21,58 +21,6 @@ const wordToPath = {
   'GUITARDATE': [[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5]]
 };
 
-// Helper to get [row, col] from a touch/mouse event position relative to grid
-function getCellFromEvent(e) {
-  let clientX, clientY;
-  if (e.touches && e.touches.length > 0) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  } else if (e.clientX !== undefined) {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  } else return null;
-
-  const wrapper = document.querySelector('.game-wrapper');
-  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
-  const rect = grid.getBoundingClientRect();
-  const x = (clientX - rect.left) / scale;
-  const y = (clientY - rect.top) / scale;
-  const padding = 8;
-  const cellSize = 54; // 40px (cell) + 16px (2 * 8px margin)
-  const adjustedX = x - padding;
-  const adjustedY = y - padding;
-  const col = Math.floor(adjustedX / cellSize);
-  const row = Math.floor(adjustedY / cellSize);
-
-  if (row >= 0 && row < gridLetters.length && col >= 0 && col < 6) {
-    return [row, col];
-  }
-  return null;
-}
-
-// Document-level handlers for touch drag
-function handleDocumentTouchMove(e) {
-  e.preventDefault();
-  const pos = getCellFromEvent(e);
-  if (pos) {
-    const [r, c] = pos;
-    handleMouseMove(r, c, e);
-  }
-}
-
-function handleDocumentTouchEnd(e) {
-  e.preventDefault();
-  let endR = startR;
-  let endC = startC;
-  const pos = getCellFromEvent(e);
-  if (pos) {
-    [endR, endC] = pos;
-  }
-  handleMouseUp(endR, endC);
-  document.removeEventListener('touchmove', handleDocumentTouchMove, { passive: false });
-  document.removeEventListener('touchend', handleDocumentTouchEnd, { passive: false });
-}
-
 let found = new Set();
 let currentPath = [];
 let permanentEdges = [];
@@ -85,14 +33,145 @@ let startR, startC;
 let currentHintWord = null;
 let usedWords = new Set();
 
-// --- MEMORY FUNCTIONS ---
+/* rAF batching: draw only when the path changes */
+let rafId = 0;
+let needsDraw = false;
+
+const grid = document.querySelector('.grid');
+const edgesSvg = document.querySelector('svg.edges');
+const currentWordDiv = document.querySelector('.current-word');
+const foundCountDiv = document.querySelector('.found-count');
+const hintButton = document.querySelector('.hint-button');
+hintButton.addEventListener('click', handleHint);
+
+/* ---------- Tunable thresholds (feel free to tweak) ---------- */
+const START_DEADZONE_RATIO = 0.35;   // must leave ~22% of a cell radius before considering a move
+const COMMIT_RATIO_ORTH     = 0.50;  // must move ~46% toward orth neighbor center to commit
+const COMMIT_RATIO_DIAG     = 0.50;  // must move ~48% toward diagonal neighbor center to commit
+const LATERAL_TOL_RATIO     = 0.42;  // corridor half-width (~42% of a cell) around the move direction
+
+/* ---------- Metrics & mapping helpers ---------- */
+function getGridMetrics() {
+  const sampleCell = grid.querySelector('.letter');
+  if (!sampleCell) return { cellSize: 54, padding: 12 };
+  const cs = getComputedStyle(sampleCell);
+  const w  = sampleCell.offsetWidth;
+  const ml = parseFloat(cs.marginLeft)  || 0;
+  const mr = parseFloat(cs.marginRight) || 0;
+  const gridStyles = getComputedStyle(grid);
+  const padding = parseFloat(gridStyles.paddingLeft) || 0;
+  return { cellSize: w + ml + mr, padding };
+}
+
+function getCellFromEvent(e) {
+  const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX);
+  const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY);
+  if (clientX === undefined || clientY === undefined) return null;
+
+  const wrapper = document.querySelector('.game-wrapper');
+  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
+  const rect = grid.getBoundingClientRect();
+  const x = (clientX - rect.left) / scale;
+  const y = (clientY - rect.top) / scale;
+
+  const { cellSize, padding } = getGridMetrics();
+  const col = Math.floor((x - padding) / cellSize);
+  const row = Math.floor((y - padding) / cellSize);
+
+  if (row >= 0 && row < gridLetters.length && col >= 0 && col < gridLetters[0].length) {
+    return [row, col];
+  }
+  return null;
+}
+
+function getCellCenter(r, c) {
+  const wrapper = document.querySelector('.game-wrapper');
+  const scale = wrapper.getBoundingClientRect().width / wrapper.offsetWidth;
+  const rect = grid.getBoundingClientRect();
+  const { cellSize, padding } = getGridMetrics();
+  const cx = padding + c * cellSize + cellSize / 2;
+  const cy = padding + r * cellSize + cellSize / 2;
+  return { x: rect.left + cx * scale, y: rect.top + cy * scale };
+}
+
+/* ---------- Commit-style neighbor picking (diagonal friendly, no flicker) ---------- */
+function neighborFromPointer(r0, c0, clientX, clientY) {
+  const { cellSize } = getGridMetrics();
+
+  // vector from current cell center to pointer
+  const cur = getCellCenter(r0, c0);
+  const dx = clientX - cur.x;
+  const dy = clientY - cur.y;
+  const vLen = Math.hypot(dx, dy);
+
+  // require leaving a small dead-zone around the center before any move
+  if (vLen < cellSize * START_DEADZONE_RATIO) return null;
+
+  // test 8 neighbors, commit to the best that passes thresholds
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+
+      // direction unit vector toward neighbor (screen coords: +y is down)
+      const len = Math.hypot(dc, dr); // 1 for orth, sqrt(2) for diagonal
+      const ux = dc / len;
+      const uy = dr / len;
+
+      // projection along direction and lateral deviation
+      const s = dx * ux + dy * uy;                  // how far along the move direction
+      const cross = Math.abs(dx * uy - dy * ux);    // perpendicular distance to direction line
+
+      // distance between centers to that neighbor
+      const distToNeighbor = cellSize * len;
+
+      // required progress along the direction (slightly higher for diagonal)
+      const commitNeeded = (len === 1 ? COMMIT_RATIO_ORTH : COMMIT_RATIO_DIAG) * distToNeighbor;
+
+      // allowed lateral corridor (proportional to one cell)
+      const lateralTol = LATERAL_TOL_RATIO * cellSize;
+
+      if (s >= commitNeeded && cross <= lateralTol) {
+        // prefer moves that are farther along and straighter
+        const score = s - 0.5 * cross;
+        if (score > bestScore) {
+          bestScore = score;
+          best = [r0 + dr, c0 + dc];
+        }
+      }
+    }
+  }
+
+  // ensure within bounds
+  if (!best) return null;
+  const [nr, nc] = best;
+  if (nr < 0 || nr >= gridLetters.length || nc < 0 || nc >= gridLetters[0].length) return null;
+  return best;
+}
+
+/* ---------- rAF batching ---------- */
+function requestDraw() {
+  needsDraw = true;
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = 0;
+    if (needsDraw) {
+      needsDraw = false;
+      drawEdges();
+    }
+  });
+}
+
+/* ---------- Memory ---------- */
 function saveState() {
   const state = {
     found: Array.from(found),
     usedWords: Array.from(usedWords),
     mistakeCount,
     spentHints,
-    currentHintWord // add this line
+    currentHintWord
   };
   localStorage.setItem('strandsGameState', JSON.stringify(state));
 }
@@ -122,23 +201,21 @@ function loadState() {
       }
     });
 
-    // Restore current hint highlight
     if (state.currentHintWord) {
       currentHintWord = state.currentHintWord;
       const path = wordToPath[currentHintWord];
-      if (path) {
-        path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
-      }
+      if (path) path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
     }
 
     foundCountDiv.textContent = `${found.size} of ${themeWords.length + 1} theme words found.`;
     updateHintButton();
-    drawEdges();
+    requestDraw();
   } catch(e) {
     console.error("Failed to load game state", e);
   }
 }
 
+/* ---------- Dictionary ---------- */
 async function loadDictionary() {
   try {
     const res = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
@@ -152,13 +229,7 @@ async function loadDictionary() {
 }
 loadDictionary();
 
-const grid = document.querySelector('.grid');
-const edgesSvg = document.querySelector('svg.edges');
-const currentWordDiv = document.querySelector('.current-word');
-const foundCountDiv = document.querySelector('.found-count');
-const hintButton = document.querySelector('.hint-button');
-hintButton.addEventListener('click', handleHint);
-
+/* ---------- UI helpers ---------- */
 function updateHintButton() {
   const earned = Math.floor(mistakeCount / 3);
   const hintsAvailable = earned - spentHints;
@@ -192,6 +263,7 @@ function handleHint() {
   path.forEach(([r, c]) => getCell(r, c).classList.add('hint-highlight'));
 }
 
+/* ---------- Core game ---------- */
 function isAdjacent(p1, p2) {
   const dr = Math.abs(p1[0] - p2[0]);
   const dc = Math.abs(p1[1] - p2[1]);
@@ -216,7 +288,7 @@ function clearPath() {
   document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
   currentPath = [];
   currentWordDiv.textContent = '';
-  drawEdges();
+  requestDraw();
 }
 
 function submit() {
@@ -226,15 +298,12 @@ function submit() {
   }
   const word = currentPath.map(([r, c]) => gridLetters[r][c]).join('').toUpperCase();
   const lower = word.toLowerCase();
-  console.log(`Submitting word: ${word}, lowercase: ${lower}, usedWords:`, Array.from(usedWords));
   if (usedWords.has(lower)) {
-    console.log(`Word ${lower} already in usedWords, showing message`);
     showMessage("Word already found...");
-    clearPath(); // Clear path when word is already used
+    clearPath();
     return;
   }
   if (!words.has(lower)) {
-    console.log(`Invalid word: ${lower}, not adding to usedWords`);
     showMessage("Not a word...");
     clearPath();
     return;
@@ -242,7 +311,6 @@ function submit() {
   usedWords.add(lower);
 
   if (allSolutions.includes(word)) {
-    console.log(`Found solution word: ${word}`);
     const isSpangram = word === spangram;
     const className = isSpangram ? 'found-yellow' : 'found-blue';
     currentPath.forEach(([r, c]) => getCell(r, c).classList.add(className));
@@ -258,19 +326,16 @@ function submit() {
       let color = className === 'found-blue' ? "#B8DEEC" : "#F1D046";
       permanentEdges.push([r1, c1, r2, c2, color]);
     }
-    // Display the word or "SPANGRAM!" with appropriate styling
     currentWordDiv.textContent = isSpangram ? 'SPANGRAM!' : word;
     currentWordDiv.classList.remove('error', 'success-theme', 'success-spangram');
     currentWordDiv.classList.add(isSpangram ? 'success-spangram' : 'success-theme');
-    drawEdges();
-    // Ensure the message stays visible for 3 seconds
+    requestDraw();
     setTimeout(() => {
       currentWordDiv.textContent = '';
       currentWordDiv.classList.remove('success-theme', 'success-spangram');
       clearPath();
     }, 3000);
   } else {
-    console.log(`Valid but non-solution word: ${lower}, mistakeCount: ${mistakeCount + 1}`);
     mistakeCount += 1;
     updateHintButton();
     showMessage("Not a theme word...");
@@ -279,79 +344,18 @@ function submit() {
   saveState();
 }
 
+/* ---------- Input ---------- */
 function handleMouseDown(r, c) {
   mouseDown = true;
   hasMoved = false;
   startR = r;
   startC = c;
-  if (currentHintWord && !found.has(currentHintWord)) {
-    return;
-  }
+  if (currentHintWord && !found.has(currentHintWord)) return;
   clearHints();
   currentHintWord = null;
 }
 
-function handleMouseMove(r, c, event) {
-  if (!mouseDown) return;
-  if (event.type === 'mousemove' && event.buttons !== 1) return;
-  if (!hasMoved) {
-    hasMoved = true;
-    currentPath = [[startR, startC]];
-    getCell(startR, startC).classList.add('selected');
-    const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-    currentWordDiv.textContent = word;
-    drawEdges();
-  }
-  const pos = [r, c];
-  const last = currentPath[currentPath.length - 1];
-  if (isAdjacent(last, pos)) {
-    const indexInPath = currentPath.findIndex(p => p[0] === r && p[1] === c);
-    if (indexInPath === -1) {
-      currentPath.push(pos);
-      getCell(r, c).classList.add('selected');
-    } else if (indexInPath < currentPath.length - 1) {
-      for (let i = currentPath.length - 1; i > indexInPath; i--) {
-        const [rr, cc] = currentPath[i];
-        getCell(rr, cc).classList.remove('selected');
-      }
-      currentPath = currentPath.slice(0, indexInPath + 1);
-    }
-    const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-    currentWordDiv.textContent = word;
-    drawEdges();
-  }
-}
-
-function handleMouseUp(r, c) {
-  if (mouseDown) {
-    mouseDown = false;
-    if (hasMoved) {
-      submit();
-    } else {
-      const pos = [r, c];
-      if (currentPath.length === 0) {
-        currentPath = [pos];
-        getCell(r, c).classList.add('selected');
-      } else {
-        const last = currentPath[currentPath.length - 1];
-        if (last[0] === r && last[1] === c) {
-          submit();
-        } else if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
-          currentPath.push(pos);
-          getCell(r, c).classList.add('selected');
-        } else {
-          clearPath();
-          currentPath = [pos];
-          getCell(r, c).classList.add('selected');
-        }
-      }
-      drawEdges();
-      const word = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
-      currentWordDiv.textContent = word;
-    }
-  }
-}
-
+/* ---------- Drawing ---------- */
 function getCell(r, c) {
   const rows = grid.querySelectorAll('.row');
   return rows[r].children[c];
@@ -396,59 +400,124 @@ function drawLine(r1, c1, r2, c2, color) {
   edgesSvg.appendChild(line);
 }
 
-/* build grid */
+/* ---------- Build grid (no per-cell listeners) ---------- */
 gridLetters.forEach((rowLetters, r) => {
   const row = document.createElement('div');
   row.classList.add('row');
-  rowLetters.forEach((letter, c) => {
+  rowLetters.forEach((letter) => {
     const letDiv = document.createElement('div');
     letDiv.classList.add('letter');
     letDiv.textContent = letter;
-    const eventArea = document.createElement('span');
-    eventArea.classList.add('letter-event-area');
-    eventArea.addEventListener('mousedown', () => handleMouseDown(r, c));
-    eventArea.addEventListener('mousemove', (event) => handleMouseMove(r, c, event));
-    eventArea.addEventListener('mouseup', () => handleMouseUp(r, c));
-    eventArea.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const pos = getCellFromEvent(e);
-      if (pos) {
-        const [tr, tc] = pos;
-        handleMouseDown(tr, tc);
-        document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
-        document.addEventListener('touchend', handleDocumentTouchEnd, { passive: false });
-      }
-    }, { passive: false });
-    letDiv.appendChild(eventArea);
     row.appendChild(letDiv);
   });
   grid.appendChild(row);
 });
-// --- LOAD SAVED STATE ---
+
+/* ---------- Pointer Events: draw only on commit ---------- */
+grid.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  const pos = getCellFromEvent(e);
+  if (!pos) return;
+  const [r, c] = pos;
+  handleMouseDown(r, c);
+  try { grid.setPointerCapture(e.pointerId); } catch {}
+});
+
+grid.addEventListener('pointermove', (e) => {
+  if (!mouseDown) return;
+
+  if (!hasMoved) {
+    hasMoved = true;
+    currentPath = [[startR, startC]];
+    getCell(startR, startC).classList.add('selected');
+    currentWordDiv.textContent = gridLetters[startR][startC];
+    requestDraw();
+  }
+
+  // Commit to the next neighbor only when thresholds are met
+  const last = currentPath[currentPath.length - 1];
+  const cand = neighborFromPointer(last[0], last[1], e.clientX, e.clientY);
+  if (!cand) return;
+
+  const [r, c] = cand;
+  const indexInPath = currentPath.findIndex(p => p[0] === r && p[1] === c);
+  let changed = false;
+
+  if (indexInPath === -1) {
+    if (isAdjacent(last, cand)) {
+      currentPath.push(cand);
+      getCell(r, c).classList.add('selected');
+      changed = true;
+    }
+  } else if (indexInPath < currentPath.length - 1) {
+    for (let i = currentPath.length - 1; i > indexInPath; i--) {
+      const [rr, cc] = currentPath[i];
+      getCell(rr, cc).classList.remove('selected');
+    }
+    currentPath = currentPath.slice(0, indexInPath + 1);
+    changed = true;
+  }
+
+  if (changed) {
+    currentWordDiv.textContent = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
+    requestDraw();
+  }
+});
+
+grid.addEventListener('pointerup', (e) => {
+  if (!mouseDown) return;
+  e.preventDefault();
+  mouseDown = false;
+
+  const pos = getCellFromEvent(e) || [startR, startC];
+
+  if (hasMoved) {
+    hasMoved = false;
+    submit();
+  } else {
+    const [r, c] = pos;
+    if (currentPath.length === 0) {
+      currentPath = [pos];
+      getCell(r, c).classList.add('selected');
+    } else {
+      const last = currentPath[currentPath.length - 1];
+      if (last[0] === r && last[1] === c) {
+        submit();
+      } else if (isAdjacent(last, pos) && !currentPath.some(p => p[0] === r && p[1] === c)) {
+        currentPath.push(pos);
+        getCell(r, c).classList.add('selected');
+      } else {
+        clearPath();
+        currentPath = [pos];
+        getCell(r, c).classList.add('selected');
+      }
+    }
+    currentWordDiv.textContent = currentPath.map(([rr, cc]) => gridLetters[rr][cc]).join('').toUpperCase();
+    requestDraw();
+  }
+
+  try { grid.releasePointerCapture(e.pointerId); } catch {}
+});
+
+grid.addEventListener('pointercancel', (e) => {
+  mouseDown = false;
+  hasMoved = false;
+  clearPath();
+  try { grid.releasePointerCapture(e.pointerId); } catch {}
+});
+
+/* ---------- State restore & misc ---------- */
 loadState();
 
 window.addEventListener('resize', () => {
   edgesSvg.setAttribute("width", grid.offsetWidth);
   edgesSvg.setAttribute("height", grid.offsetHeight);
-  if (currentPath.length > 1 || permanentEdges.length > 0) drawEdges();
+  requestDraw();
 });
-
-window.addEventListener('mouseup', () => {
-  if (mouseDown && hasMoved) {
-    mouseDown = false;
-    hasMoved = false;
-    submit();
-  } else if (mouseDown) {
-    mouseDown = false;
-    hasMoved = false;
-  }
-});
-
-document.addEventListener('touchcancel', handleDocumentTouchEnd, { passive: false });
 
 updateHintButton();
 const newGameBtn = document.getElementById('newGameBtn');
 newGameBtn.addEventListener('click', () => {
-  localStorage.removeItem('strandsGameState'); // clear saved state
-  location.reload(); // reload page fresh
+  localStorage.removeItem('strandsGameState');
+  location.reload();
 });
