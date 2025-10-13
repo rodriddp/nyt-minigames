@@ -482,3 +482,45 @@ grid.addEventListener('click', (e) => {
 
   toggleSelect(tile);
 });
+
+
+// ===== Button press/hold feedback (mobile + desktop) =====
+let activeBtn = null;
+
+function isInside(el, x, y) {
+  const r = el.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+document.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest('.btn');
+  if (!btn || btn.disabled) return;
+
+  activeBtn = btn;
+  btn.classList.add('pressed');
+  try { btn.setPointerCapture(e.pointerId); } catch {}
+});
+
+document.addEventListener('pointermove', (e) => {
+  if (!activeBtn) return;
+  // Toggle pressed visual only while the pointer stays over the button
+  if (isInside(activeBtn, e.clientX, e.clientY)) {
+    activeBtn.classList.add('pressed');
+  } else {
+    activeBtn.classList.remove('pressed');
+  }
+});
+
+function clearBtnPress() {
+  if (activeBtn) activeBtn.classList.remove('pressed');
+  activeBtn = null;
+}
+
+document.addEventListener('pointerup', clearBtnPress);
+document.addEventListener('pointercancel', clearBtnPress);
+window.addEventListener('blur', clearBtnPress);
+
+// Optional: block context menu on long-press/right-click for buttons (like tiles)
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.closest('.btn, .tile')) e.preventDefault();
+});
