@@ -49,11 +49,6 @@ h1 { font-weight: 400; font-size: 15px; margin-bottom: 20px; color: #515043; }
   transition: background 0.2s, transform 0.2s; /* keep transform transition for smooth press */
   user-select: none;
   touch-action: manipulation; /* <-- add this */
-   /* smoother feel */
-  transition:
-    background-color 220ms ease,
-    color 220ms ease,
-    transform 120ms cubic-bezier(.2,.8,.2,1);
 }
 
 /* Selected state now only changes color */
