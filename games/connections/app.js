@@ -425,41 +425,60 @@ document.getElementById('deselectBtn').addEventListener('click', deselectAll);
 document.getElementById('submitBtn').addEventListener('click', submitSelection);
 
 // Press/hold feedback (works for mouse & touch via Pointer Events)
-// Press/hold feedback (works for mouse & touch via Pointer Events)
+let activePress = null;
+let skipNextClick = false;
+
 function clearAllPressed() {
   grid.querySelectorAll('.tile.pressed--select, .tile.pressed--unselect')
-      .forEach(t => {
-        t.classList.remove('pressed--select', 'pressed--unselect');
-      });
+    .forEach(t => t.classList.remove('pressed--select', 'pressed--unselect'));
+}
+
+function pointInRect(el, x, y) {
+  const r = el.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
 grid.addEventListener('pointerdown', (e) => {
   const tile = e.target.closest('.tile');
   if (!tile || tile.classList.contains('correct')) return;
 
-  // If it’s currently selected, pressing previews unselect; otherwise preview select
   const willSelect = !tile.classList.contains('selected');
   tile.classList.add(willSelect ? 'pressed--select' : 'pressed--unselect');
 
-  try { tile.setPointerCapture(e.pointerId); } catch (_) {}
+  activePress = { tile, pointerId: e.pointerId };
+  try { tile.setPointerCapture(e.pointerId); } catch {}
 });
 
-const releasePress = () => clearAllPressed();
-grid.addEventListener('pointerup', releasePress);
-grid.addEventListener('pointercancel', releasePress);
-window.addEventListener('blur', releasePress);
+grid.addEventListener('pointerup', (e) => {
+  if (!activePress) return;
+  const { tile } = activePress;
 
-// Click toggles selection; ensure pressed visuals are cleared first
+  // If finger/mouse ends inside the same tile, commit the toggle NOW
+  if (!tile.classList.contains('correct') && pointInRect(tile, e.clientX, e.clientY)) {
+    toggleSelect(tile);          // commits while preview color is still applied
+    skipNextClick = true;        // ignore the synthetic click that follows on iOS
+  }
+
+  clearAllPressed();
+  activePress = null;
+});
+
+grid.addEventListener('pointercancel', () => {
+  clearAllPressed();
+  activePress = null;
+});
+
+window.addEventListener('blur', () => {
+  clearAllPressed();
+  activePress = null;
+});
+
+// Keep for keyboard/misc environments, but ignore if we already handled pointerup
 grid.addEventListener('click', (e) => {
+  if (skipNextClick) { skipNextClick = false; return; }
+
   const tile = e.target.closest('.tile');
   if (!tile || tile.classList.contains('correct')) return;
 
-  tile.classList.remove('pressed--select', 'pressed--unselect');
   toggleSelect(tile);
 });
-// Block context menu from long-press/right-click on tiles
-grid.addEventListener('contextmenu', (e) => {
-  if (e.target.closest('.tile')) e.preventDefault();
-});
-
-
