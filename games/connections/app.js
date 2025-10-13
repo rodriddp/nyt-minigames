@@ -424,9 +424,38 @@ document.getElementById('shuffleBtn').addEventListener('click', shuffleTiles);
 document.getElementById('deselectBtn').addEventListener('click', deselectAll);
 document.getElementById('submitBtn').addEventListener('click', submitSelection);
 
-// Grid delegation for tile clicks
+// Press/hold feedback (works for mouse & touch via Pointer Events)
+// Press/hold feedback (works for mouse & touch via Pointer Events)
+function clearAllPressed() {
+  grid.querySelectorAll('.tile.pressed--select, .tile.pressed--unselect')
+      .forEach(t => {
+        t.classList.remove('pressed--select', 'pressed--unselect');
+      });
+}
+
+grid.addEventListener('pointerdown', (e) => {
+  const tile = e.target.closest('.tile');
+  if (!tile || tile.classList.contains('correct')) return;
+
+  // If it’s currently selected, pressing previews unselect; otherwise preview select
+  const willSelect = !tile.classList.contains('selected');
+  tile.classList.add(willSelect ? 'pressed--select' : 'pressed--unselect');
+
+  try { tile.setPointerCapture(e.pointerId); } catch (_) {}
+});
+
+const releasePress = () => clearAllPressed();
+grid.addEventListener('pointerup', releasePress);
+grid.addEventListener('pointercancel', releasePress);
+window.addEventListener('blur', releasePress);
+
+// Click toggles selection; ensure pressed visuals are cleared first
 grid.addEventListener('click', (e) => {
   const tile = e.target.closest('.tile');
   if (!tile || tile.classList.contains('correct')) return;
+
+  tile.classList.remove('pressed--select', 'pressed--unselect');
   toggleSelect(tile);
 });
+
+

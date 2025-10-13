@@ -36,6 +36,7 @@ h1 { font-weight: 400; font-size: 15px; margin-bottom: 20px; color: #515043; }
   width: max-content;
   position: relative;
 }
+/* Existing .tile */
 .tile {
   background: #EFEFE6;
   border-radius: 8px;
@@ -45,10 +46,29 @@ h1 { font-weight: 400; font-size: 15px; margin-bottom: 20px; color: #515043; }
   text-align: center;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s; /* keep transform transition for smooth press */
   user-select: none;
+  touch-action: manipulation; /* <-- add this */
 }
-.tile.selected { background: #59594E; color: #F8F8F8; transform: scale(1.05); }
+
+/* Selected state now only changes color */
+.tile.selected {
+  background: #59594E;
+  color: #F8F8F8;
+  /* REMOVE transform from here */
+}
+
+.tile.pressed--select {
+  background: #59594E;
+  color: #F8F8F8;
+  transform: scale(0.9);
+}
+
+.tile.pressed--unselect {
+  background: #EFEFE6;   /* unselected preview */
+  color: #000;           /* explicitly override .selected white text */
+  transform: scale(0.9);
+}
 
 .group-yellow { background: #fbe48c; }
 .group-green  { background: #9dd296; }
