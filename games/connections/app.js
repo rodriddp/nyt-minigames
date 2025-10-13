@@ -457,5 +457,9 @@ grid.addEventListener('click', (e) => {
   tile.classList.remove('pressed--select', 'pressed--unselect');
   toggleSelect(tile);
 });
+// Block context menu from long-press/right-click on tiles
+grid.addEventListener('contextmenu', (e) => {
+  if (e.target.closest('.tile')) e.preventDefault();
+});
 
 

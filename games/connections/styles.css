@@ -69,6 +69,12 @@ h1 { font-weight: 400; font-size: 15px; margin-bottom: 20px; color: #515043; }
   color: #000;           /* explicitly override .selected white text */
   transform: scale(0.9);
 }
+.tile, .tile * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;      /* iOS long-press menu */
+  -webkit-tap-highlight-color: transparent; /* remove gray flash on iOS */
+}
 
 .group-yellow { background: #fbe48c; }
 .group-green  { background: #9dd296; }
