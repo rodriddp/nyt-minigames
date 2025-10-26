@@ -1,31 +1,33 @@
 // app.js
 (() => {
   // === SOLUTION GRID ===
-  const solution = [
-    ["#", "#", "#", "V", "O", "I"],
-    ["#", "#", "C", "A", "T", "S"],
-    ["#", "#", "A", "L", "T", "O"],
-    ["#", "A", "O", "V", "E", "#"],
-    ["O", "T", "T", "E", "R", "#"],
-    ["#", "M", "I", "R", "S", "#"],
-    ["#", "B", "C", "G", "#", "#"],
-  ];
+  // 10x10 grid, no black squares
+  const solution = Array.from({ length: 14 }, () =>
+    Array.from({ length: 14 }, () => "")
+  );
 
   // === WORDS (placeholders) ===
-  let words = [
-    { number: 1, dir: "across", cells: [[0,3],[0,4],[0,5]], clue: "Favourite Stockholm transportation" },
-    { number: 1, dir: "down",   cells: [[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3]], clue: "Placeholder clue 1-down" }, // ← now 7 letters
-    { number: 2, dir: "down",   cells: [[0,4],[1,4],[2,4],[3,4],[4,4],[5,4]], clue: "Us when we sleep together" },
-    { number: 3, dir: "down",   cells: [[0,5],[1,5],[2,5]], clue: "Three-letter code for uniformity worldwide" },
-    { number: 4, dir: "across", cells: [[1,2],[1,3],[1,4],[1,5]], clue: "Our cartoon alter egos" },
-    { number: 4, dir: "down",   cells: [[1,2],[2,2],[3,2],[4,2],[5,2],[6,2]], clue: "Describes my room after you arrive" },
-    { number: 5, dir: "across", cells: [[2,2],[2,3],[2,4],[2,5]], clue: "'Said' to stop Mexicans" },
-    { number: 6, dir: "down",   cells: [[3,1],[4,1],[5,1],[6,1]], clue: "Associació de Transports Metropolitans de Barcelona" }, // ← added 6-down (4 letters)
-    { number: 6, dir: "across", cells: [[3,1],[3,2],[3,3],[3,4]], clue: "Must with tomatoes" },
-    { number: 7, dir: "across", cells: [[4,0],[4,1],[4,2],[4,3],[4,4]], clue: "Your spiritual animal" },
-    { number: 8, dir: "across", cells: [[5,1],[5,2],[5,3],[5,4]], clue: "Accronim to describe Inés + roomies (plural)" },
-    { number: 9, dir: "across", cells: [[6,1],[6,2],[6,3]], clue: "Best company ever (not the best merchandising though)" },
-  ];
+  let words = [];
+
+  // across words (10 tiles each)
+  for (let r = 0; r < 14; r++) {
+    words.push({
+      number: r + 1,
+      dir: "across",
+      cells: Array.from({ length: 14 }, (_, c) => [r, c]),
+      clue: `Placeholder clue ${r + 1}-across`,
+    });
+  }
+
+  // down words (10 tiles each)
+  for (let c = 0; c < 14; c++) {
+    words.push({
+      number: c + 1,
+      dir: "down",
+      cells: Array.from({ length: 14 }, (_, r) => [r, c]),
+      clue: `Placeholder clue ${c + 1}-down`,
+    });
+  }
 
   words = words.sort((a, b) => a.number - b.number || (a.dir === "across" ? -1 : 1));
 
@@ -42,34 +44,28 @@
   let currentR = -1;
   let currentC = -1;
 
-  const CELL_SIZE = 48; // 20% smaller than before (was 60)
+  const CELL_SIZE = 48;
 
   // --- Build grid ---
   function createGrid() {
-    for (let r = 0; r < 7; r++) {
+    for (let r = 0; r < 14; r++) {
       cells[r] = [];
-      for (let c = 0; c < 6; c++) {
-        let cell;
-        if (solution[r][c] === "#") {
-          cell = document.createElement("div");
-          cell.classList.add("cell", "black");
-        } else {
-          cell = document.createElement("input");
-          cell.type = "text";
-          cell.maxLength = 1;
-          cell.classList.add("cell");
+      for (let c = 0; c < 14; c++) {
+        const cell = document.createElement("input");
+        cell.type = "text";
+        cell.maxLength = 1;
+        cell.classList.add("cell");
 
-          cell.addEventListener("click", () => handleCellClick(r, c));
-          cell.addEventListener("focus", () => handleCellFocus(r, c));
-          cell.addEventListener("input", (e) => handleCellInput(e, r, c));
-          cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
+        cell.addEventListener("click", () => handleCellClick(r, c));
+        cell.addEventListener("focus", () => handleCellFocus(r, c));
+        cell.addEventListener("input", (e) => handleCellInput(e, r, c));
+        cell.addEventListener("keydown", (e) => handleCellKeyDown(e, r, c));
 
-          // disable selection/copy/context
-          cell.addEventListener("select", (e) => e.preventDefault());
-          cell.addEventListener("copy", (e) => e.preventDefault());
-          cell.addEventListener("contextmenu", (e) => e.preventDefault());
-          cell.addEventListener("dragstart", (e) => e.preventDefault());
-        }
+        // disable selection/copy/context
+        cell.addEventListener("select", (e) => e.preventDefault());
+        cell.addEventListener("copy", (e) => e.preventDefault());
+        cell.addEventListener("contextmenu", (e) => e.preventDefault());
+        cell.addEventListener("dragstart", (e) => e.preventDefault());
 
         gridEl.appendChild(cell);
         cells[r][c] = cell;
@@ -79,12 +75,12 @@
         cell.style.border = "1px solid #606060";
         if (c === 0) cell.style.borderLeft = "2px solid black";
         if (r === 0) cell.style.borderTop = "2px solid black";
-        if (c === 5) cell.style.borderRight = "2px solid black";
-        if (r === 6) cell.style.borderBottom = "2px solid black";
+        if (c === 9) cell.style.borderRight = "2px solid black";
+        if (r === 9) cell.style.borderBottom = "2px solid black";
       }
     }
 
-    // Overlay numbers (adjusted for smaller cells)
+    // Overlay numbers
     const gridRect = gridEl.getBoundingClientRect();
     const bodyRect = document.body.getBoundingClientRect();
     const offsetX = gridRect.left - bodyRect.left;
@@ -92,16 +88,15 @@
 
     words.forEach(w => {
       const [r, c] = w.cells[0];
-      if (solution[r][c] !== "#") {
-        const num = document.createElement("div");
-        num.classList.add("number");
-        num.textContent = w.number;
-        num.style.left = `${offsetX + c * CELL_SIZE + 2}px`;
-        num.style.top  = `${offsetY + r * CELL_SIZE + 2}px`;
-        numberOverlay.appendChild(num);
-      }
+      const num = document.createElement("div");
+      num.classList.add("number");
+      num.textContent = w.number;
+      num.style.left = `${offsetX + c * CELL_SIZE + 2}px`;
+      num.style.top  = `${offsetY + r * CELL_SIZE + 2}px`;
+      numberOverlay.appendChild(num);
     });
   }
+
   // --- Handlers ---
   function handleAfterInput(r, c) {
     cells[r][c].classList.remove("error");
@@ -154,10 +149,27 @@
 
     if (e.target.value.length === 1) {
       handleAfterInput(r, c);
+      handleBlackToggle(r, c); // ← add this line
     } else {
       e.target.classList.remove("error");
     }
     saveProgress();
+  }
+  function handleBlackToggle(r, c) {
+    const cell = cells[r][c];
+    if (cell.value === "#") {
+      // turn black
+      cell.classList.add("black");
+      cell.value = "";
+      cell.readOnly = true;
+      cell.dataset.locked = "true";
+    } else if (cell.classList.contains("black") && cell.value === "") {
+      // revert to normal input
+      cell.classList.remove("black");
+      cell.readOnly = false;
+      delete cell.dataset.locked;
+      cell.focus();
+    }
   }
 
   function handleCellKeyDown(e, r, c) {
