@@ -388,3 +388,21 @@
   loadProgress();
   window.addEventListener("beforeunload", saveProgress);
 })();
+
+// Disable double-tap zoom on iOS Safari, but allow pinch-zoom
+let lastTouchEnd = 0;
+
+document.addEventListener(
+  'touchend',
+  function (event) {
+    // Skip if multi-touch (e.g., pinch)
+    if (event.touches.length > 0) return;
+
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  },
+  { passive: false }
+);
