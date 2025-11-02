@@ -224,7 +224,20 @@
     currentC = sc;
     const selCell = cells[sr][sc];
     selCell.classList.add("selected");
-    if (selCell.tagName === "INPUT") selCell.focus();
+    // fix autofocus
+    if (selCell.tagName === "INPUT") {
+      // 1. remember where we are
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+  
+      // 2. focus the cell
+      selCell.focus();
+  
+      // 3. slam the scroll back (next tick so browser can’t override us)
+      requestAnimationFrame(() => {
+        window.scrollTo(scrollX, scrollY);
+      });
+    }
 
     clueEl.textContent = `${words[wordIndex].clue}`;
   }
