@@ -521,3 +521,22 @@ newGameBtn.addEventListener('click', () => {
   localStorage.removeItem('strandsGameState');
   location.reload();
 });
+
+// Disable double-tap zoom on iOS Safari, but allow pinch-zoom
+let lastTouchEnd = 0;
+
+document.addEventListener(
+  'touchend',
+  function (event) {
+    // Don't block if it's part of a pinch or multitouch
+    if (event.touches.length > 0) return;
+
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      // Two taps within 300ms = double-tap
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  },
+  { passive: false }
+);
