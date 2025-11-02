@@ -307,6 +307,6 @@
     refreshBoard();
   });
 })();
-// ZOOM BLOQUEADO 
+// Block zoom in the keyboard (double touch and pinch)
 document.documentElement.style.touchAction = 'pan-x pan-y';
 document.addEventListener('gesturestart', e => e.preventDefault());
