@@ -81,7 +81,7 @@ If you want to reset your progress, simply click **"New Game"** in the interface
 Add a GIF or short video demonstrating gameplay for each mini game here.  
 For example:
 
-**📸 Demo Placeholder:**  
+**📸 Demo:**  
 ![Gameplay Demo](docs/demo_1.gif)
 ![Gameplay Demo](docs/demo_2.gif)
 
