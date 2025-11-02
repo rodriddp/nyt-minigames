@@ -10,6 +10,8 @@ This project lets you **create and personalize** your own daily game collection,
 The website serves as a **hub** that mimics the visual and interactive style of the NYT Games homepage.  
 From the main screen, you can select and play any of the available games, each one reimagined for **personal or shared experiences** — perfect for customizing challenges or commemorating shared adventures.
 
+![Landing page Screenshot](docs/screenshots/landing_page.png)
+
 Each game is **session-aware**, meaning your progress is automatically saved in your browser via **local storage**.  
 You can close and reopen the page, and your game state will still be there.
 
@@ -21,8 +23,8 @@ You can close and reopen the page, and your game state will still be there.
 A personalized version of the classic **Wordle**, where players try to guess a secret word within a limited number of attempts.  
 You can define your own word lists or secret word, making it ideal for private word challenges or themed puzzles.
 
-**📸 Screenshot Placeholder:**  
-![Wordle Screenshot](docs/wordle.png)
+**📸 Wordle page:**  
+![Wordle Screenshot](docs/screenshots/wordle.png)
 
 ---
 
@@ -36,8 +38,8 @@ Features include:
 - **Session-based saving** — you can leave mid-game and return later  
 - Fully editable `CATEGORIES` array in `app.js` for your own word sets  
 
-**📸 Screenshot Placeholder:**  
-![Connections Screenshot](docs/connections.png)
+**📸 Connections page:**  
+![Connections Screenshot](docs/screenshots/connections.png)
 
 ---
 
@@ -49,8 +51,8 @@ Features include:
 - **Session-based saving** — you can leave mid-game and return later  
 - Fully editable `grid`, `themeWords` and `spangram` in `app.js` for your own word sets 
 
-**📸 Screenshot Placeholder:**  
-![Strands Screenshot](docs/strands.png)
+**📸 Strands page:**  
+![Strands Screenshot](docs/screenshots/strands.png)
 
 ---
 
@@ -60,8 +62,8 @@ Perfect for quick challenges or daily rituals.
 
 > *(Ignore the `mini_design` folder; it contains early styling experiments.)*
 
-**📸 Screenshot Placeholder:**  
-![The Mini Screenshot](docs/mini.png)
+**📸 The mini page:**  
+![The Mini Screenshot](docs/screenshots/mini.png)
 
 ---
 
@@ -80,7 +82,8 @@ Add a GIF or short video demonstrating gameplay for each mini game here.
 For example:
 
 **📸 Demo Placeholder:**  
-![Gameplay Demo](docs/demo.gif)
+![Gameplay Demo](docs/demo_1.gif)
+![Gameplay Demo](docs/demo_2.gif)
 
 ---
 
@@ -127,7 +130,7 @@ nyt-minigames/
 │   ├── strands/
 │   ├── mini/
 │   └── ...
-├── docs/                 # For screenshots and GIFs (add here)
+├── docs/                 
 └── README.md
 ```
 
