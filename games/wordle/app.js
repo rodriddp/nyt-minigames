@@ -307,3 +307,6 @@
     refreshBoard();
   });
 })();
+// ZOOM BLOQUEADO 
+document.documentElement.style.touchAction = 'pan-x pan-y';
+document.addEventListener('gesturestart', e => e.preventDefault());
