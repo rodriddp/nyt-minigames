@@ -43,7 +43,11 @@ Features include:
 
 ### 🧵 Strands
 A creative twist on **Strands**, where you can design custom word-finding puzzles.  
-Players must uncover hidden words to reveal a **central theme** or **storyline**, often tied to your shared adventures.
+Players must uncover hidden words to reveal the spangram: a **central theme** or **storyline**.
+Features include:
+- Find three words longer than 4 letters to unlock a hint  
+- **Session-based saving** — you can leave mid-game and return later  
+- Fully editable `grid`, `themeWords` and `spangram` in `app.js` for your own word sets 
 
 **📸 Screenshot Placeholder:**  
 ![Strands Screenshot](docs/strands.png)
